@@ -6,11 +6,12 @@ import axios from 'axios';
 
 export default function SampleList() {
   const [samples, setSamples] = useState([]);
+  console.log(samples.data);
 
   useEffect(() => {
     axios
       .get('http://localhost:5000/api/samples')
-      .then((res) => setSamples(res.data))
+      .then((res) => setSamples(res.data.data))
       .catch((err) => console.error(err));
   }, []);
 

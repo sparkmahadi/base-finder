@@ -35,7 +35,7 @@ export default function AddSample() {
     } catch (error) {
       toast.error('Error adding sample.');
     }
-
+    console.log(form);
     setIsSubmitting(false);
   };
 

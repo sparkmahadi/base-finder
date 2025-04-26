@@ -1,6 +1,4 @@
-import Image from "next/image";
 import AddSample from "./pages/AddSample";
-import SampleList from "./pages/SampleList";
 
 export default function Home() {
   return (
@@ -8,7 +6,6 @@ export default function Home() {
     <h1 className="text-2xl font-bold mb-6">Garment Sample Tracking</h1>
     <AddSample />
     <h2 className="text-xl mt-6 mb-4">Sample List</h2>
-    <SampleList />
   </div>
   );
 }

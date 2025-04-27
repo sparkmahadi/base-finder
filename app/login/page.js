@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
+  const {login} = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
@@ -21,6 +23,7 @@ export default function LoginPage() {
       const res = await API.post("/api/auth/login", form);
       console.log(res.data);
       localStorage.setItem("token", res.data.token);
+      login();
       router.push("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");

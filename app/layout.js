@@ -1,4 +1,4 @@
-
+import { AuthProvider } from "./context/AuthContext"; // adjust path
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import "./globals.css";
@@ -13,10 +13,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Navbar/>
-        {children}
-        <Footer/>
-        <ToastContainer />
+        <AuthProvider>
+          <Navbar />
+          {children}
+          <Footer />
+          <ToastContainer />
+        </AuthProvider>
       </body>
     </html>
   );

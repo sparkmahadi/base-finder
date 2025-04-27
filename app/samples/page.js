@@ -14,8 +14,9 @@ export default function SampleList() {
     style: '',
     category: '',
     shelf: '',
-    box: '',
+    division: '',
   });
+  console.log(samples);
 
   const fetchSamples = async () => {
     try {
@@ -39,8 +40,8 @@ export default function SampleList() {
     setEditedSample({
       style: sample.style,
       category: sample.category,
-      shelf: sample.shelf,
-      box: sample.box,
+      shelf: sample.s,
+      division: sample.d,
     });
     setModalIsOpen(true);
   };
@@ -95,7 +96,7 @@ export default function SampleList() {
             <th className="border p-2">Style</th>
             <th className="border p-2">Category</th>
             <th className="border p-2">Shelf</th>
-            <th className="border p-2">Box</th>
+            <th className="border p-2">Division</th>
             <th className="border p-2">Added By</th>
             <th className="border p-2">Updated By</th>
             <th className="border p-2">Deleted By</th>
@@ -107,8 +108,8 @@ export default function SampleList() {
             <tr key={index} className="text-center hover:bg-gray-50">
               <td className="border p-2">{sample.style}</td>
               <td className="border p-2">{sample.category}</td>
-              <td className="border p-2">{sample.shelf}</td>
-              <td className="border p-2">{sample.box}</td>
+              <td className="border p-2">{sample.s}</td>
+              <td className="border p-2">{sample.d}</td>
               <td className="border p-2">{sample.addedBy || 'N/A'}</td>
               <td className="border p-2">{sample.updatedBy || 'N/A'}</td>
               <td className="border p-2">{sample.deletedBy || 'N/A'}</td>
@@ -172,11 +173,11 @@ export default function SampleList() {
             />
           </div>
           <div>
-            <label className="block text-sm">Box:</label>
+            <label className="block text-sm">Division:</label>
             <input
               type="text"
-              name="box"
-              value={editedSample.box}
+              name="division"
+              value={editedSample.division}
               onChange={handleEditChange}
               className="border p-2 w-full"
             />

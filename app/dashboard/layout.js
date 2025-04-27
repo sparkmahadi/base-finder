@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "../components/Navbar";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
@@ -23,7 +24,6 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* You can also add your Navbar here */}
       <header className="bg-blue-600 text-white p-4">
         <h1 className="text-xl font-semibold">Dashboard</h1>
       </header>

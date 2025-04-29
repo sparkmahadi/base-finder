@@ -1,197 +1,154 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Modal from 'react-modal';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
-Modal.setAppElement('body');
-
-export default function SampleList() {
+const SampleList = () => {
   const [samples, setSamples] = useState([]);
-  const [selectedSample, setSelectedSample] = useState(null);
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
   const [editedSample, setEditedSample] = useState({
-    style: '',
-    category: '',
-    shelf: '',
-    division: '',
+    date: "",
+    category: "",
+    style: "",
+    no_of_sample: "",
+    shelf: "",
+    division: "",
+    position: "",
+    status: "",
+    comments: "",
+    taken: "",
+    purpose_of_taking: "",
+    released: "",
   });
-  console.log(samples);
-
-  const fetchSamples = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/samples', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setSamples(res.data.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   useEffect(() => {
     fetchSamples();
   }, []);
 
-  const openEditModal = (sample) => {
-    setSelectedSample(sample);
-    setEditedSample({
-      style: sample.style,
-      category: sample.category,
-      shelf: sample.s,
-      division: sample.d,
-    });
-    setModalIsOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalIsOpen(false);
-    setSelectedSample(null);
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditedSample((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const saveChanges = async () => {
+  const fetchSamples = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/samples/${selectedSample._id}`, editedSample, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      closeModal();
-      fetchSamples();
+      const res = await axios.get("http://localhost:5000/api/samples");
+      setSamples(res.data.samples);
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to fetch samples");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this sample?')) {
-      try {
-        await axios.delete(`http://localhost:5000/api/samples/${id}`, {
+  const handleEdit = (index) => {
+    const sample = samples[index];
+    setEditingIndex(index);
+    setEditedSample({ ...sample });
+  };
+
+  const handleChange = (e) => {
+    console.log(editedSample);
+    const { name, value } = e.target;
+    setEditedSample((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async (id) => {
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/api/samples/${id}`,
+        editedSample,
+        {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-        });
-        fetchSamples();
-      } catch (err) {
-        console.error(err);
+        }
+      );
+
+      if (res?.data?.success) {
+        const updatedSamples = [...samples];
+        updatedSamples[editingIndex] = { ...updatedSamples[editingIndex], ...editedSample };
+        setSamples(updatedSamples);
+        setEditingIndex(null);
+        toast.success("Sample updated successfully");
       }
+    } catch (err) {
+      toast.error("Failed to update sample");
     }
   };
+
+  const renderCell = (name, value, index) =>
+    editingIndex === index ? (
+      <input
+        name={name}
+        value={editedSample[name]}
+        onChange={handleChange}
+        className="border p-1 w-full"
+      />
+    ) : (
+      value
+    );
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse border">
+      <table className="min-w-full bg-white border border-gray-300 text-sm">
         <thead className="bg-gray-100">
           <tr>
-            <th className="border p-2">Style</th>
-            <th className="border p-2">Category</th>
-            <th className="border p-2">Shelf</th>
-            <th className="border p-2">Division</th>
-            <th className="border p-2">Added By</th>
-            <th className="border p-2">Updated By</th>
-            <th className="border p-2">Deleted By</th>
-            <th className="border p-2">Actions</th>
+            {[
+              "SL",
+              "Date",
+              "Category",
+              "Style",
+              "No. of sample",
+              "Shelf",
+              "Division",
+              "Position",
+              "Status",
+              "Comments",
+              "Taken",
+              "Purpose of Taking",
+              "Released",
+              "Actions",
+            ].map((head) => (
+              <th key={head} className="py-2 px-4 border-b font-medium">
+                {head}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {samples.map((sample, index) => (
-            <tr key={index} className="text-center hover:bg-gray-50">
-              <td className="border p-2">{sample.style}</td>
-              <td className="border p-2">{sample.category}</td>
-              <td className="border p-2">{sample.s}</td>
-              <td className="border p-2">{sample.d}</td>
-              <td className="border p-2">{sample.addedBy || 'N/A'}</td>
-              <td className="border p-2">{sample.updatedBy || 'N/A'}</td>
-              <td className="border p-2">{sample.deletedBy || 'N/A'}</td>
-              <td className="border p-2 space-x-2">
-                <button
-                  onClick={() => openEditModal(sample)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(sample._id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
+            <tr key={sample._id}>
+              <td className="py-2 px-4 border-b">{index + 1}</td>
+              <td className="py-2 px-4 border-b">{renderCell("date", sample.date, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("category", sample.category, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("style", sample.style, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("no_of_sample", sample.no_of_sample, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("shelf", sample.shelf, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("division", sample.division, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("position", sample.position, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("status", sample.status, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("comments", sample.comments, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("taken", sample.taken, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("purpose_of_taking", sample.purpose_of_taking, index)}</td>
+              <td className="py-2 px-4 border-b">{renderCell("released", sample.released, index)}</td>
+              <td className="py-2 px-4 border-b">
+                {editingIndex === index ? (
+                  <button
+                    onClick={() => handleSave(sample._id)}
+                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                  >
+                    Save
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleEdit(index)}
+                    className="bg-gray-500 text-white px-2 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* Modal for Editing */}
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={closeModal}
-        contentLabel="Edit Sample"
-        className="bg-white p-6 rounded shadow-lg max-w-md mx-auto mt-20"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-      >
-        <h2 className="text-xl mb-4">Edit Sample</h2>
-        <form className="space-y-4">
-          <div>
-            <label className="block text-sm">Style:</label>
-            <input
-              type="text"
-              name="style"
-              value={editedSample.style}
-              onChange={handleEditChange}
-              className="border p-2 w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-sm">Category:</label>
-            <input
-              type="text"
-              name="category"
-              value={editedSample.category}
-              onChange={handleEditChange}
-              className="border p-2 w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-sm">Shelf:</label>
-            <input
-              type="text"
-              name="shelf"
-              value={editedSample.shelf}
-              onChange={handleEditChange}
-              className="border p-2 w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-sm">Division:</label>
-            <input
-              type="text"
-              name="division"
-              value={editedSample.division}
-              onChange={handleEditChange}
-              className="border p-2 w-full"
-            />
-          </div>
-        </form>
-        <div className="flex justify-end mt-4 space-x-2">
-          <button onClick={closeModal} className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">
-            Cancel
-          </button>
-          <button onClick={saveChanges} className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600">
-            Save
-          </button>
-        </div>
-      </Modal>
     </div>
   );
-}
+};
+
+export default SampleList;

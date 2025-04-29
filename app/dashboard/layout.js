@@ -19,13 +19,25 @@ export default function DashboardLayout({ children }) {
   }, [router]);
 
   if (isAuthenticated === null) {
-    return null; // while checking auth, show nothing (no flicker)
+    return <h3>Loading...</h3>; // while checking auth, show nothing (no flicker)
   }
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="bg-blue-600 text-white p-4">
         <h1 className="text-xl font-semibold">Dashboard</h1>
+        <button
+          onClick={() => router.push("/sample-categories")}
+          className="text-white hover:text-gray-300"
+        >
+          sample-categories
+        </button>
+        <button
+          onClick={() => router.push("/sample-categories/create-category")}
+          className="text-white hover:text-gray-300"
+        >
+          create-category
+        </button>
       </header>
 
       <main className="flex-grow p-8 bg-gray-100">

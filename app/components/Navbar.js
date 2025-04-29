@@ -5,7 +5,9 @@ import { useAuth } from "../context/AuthContext"; // adjust path
 
 export default function Navbar() {
   const router = useRouter();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, getUserInfo, userInfo } = useAuth();
+  getUserInfo();
+  console.log(userInfo);
 
   const handleLogout = () => {
     logout();
@@ -29,6 +31,12 @@ export default function Navbar() {
           className="text-white hover:text-gray-300"
         >
           Samples
+        </button>
+        <button
+          onClick={() => router.push("/samples/add-sample")}
+          className="text-white hover:text-gray-300"
+        >
+          Add Samples
         </button>
 
         {isAuthenticated ? (

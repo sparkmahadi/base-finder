@@ -29,7 +29,7 @@ export default function AddSample() {
     setIsSubmitting(true);
     
     try {
-      await axios.post('http://localhost:5000/api/samples', form);
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`, form);
       toast.success('Sample added successfully!');
       setForm({ style: '', category: '', shelf: '', box: '' });
     } catch (error) {

@@ -6,7 +6,7 @@ import { useAuth } from "../context/AuthContext"; // adjust path
 export default function Navbar() {
   const router = useRouter();
   const { isAuthenticated, logout, getUserInfo, userInfo } = useAuth();
-  getUserInfo();
+  // getUserInfo();
   console.log(userInfo);
 
   const handleLogout = () => {
@@ -48,12 +48,18 @@ export default function Navbar() {
               Dashboard
             </button>
             <button
+              onClick={() => router.push("/profile")}
+              className="text-white hover:text-gray-300"
+            >
+              {userInfo?.username}
+            </button>
+            <button
               onClick={handleLogout}
               className="text-white hover:text-gray-300"
             >
               Logout
             </button>
-          </>
+          </> 
         ) : (
           <>
             <button

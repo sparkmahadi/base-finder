@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
 
   const getUserInfo = async (token) => {
     try {
-      const response = await API.get("/api/auth/user", {
+      const response = await API.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/user`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

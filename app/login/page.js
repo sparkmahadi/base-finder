@@ -20,7 +20,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await API.post("/api/auth/login", form);
+      const res = await API.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, form);
       console.log(res.data);
       localStorage.setItem("token", res.data.token);
       login();

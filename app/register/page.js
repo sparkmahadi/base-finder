@@ -3,27 +3,39 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import API from "@/lib/api";
+import { toast } from "react-toastify";
+import Loader from "../components/Loader";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [form, setForm] = useState({ username: "", name: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
+    setLoading(true);
     e.preventDefault();
     setError("");
     console.log(form);
     try {
-      await API.post("/api/auth/register", form);
+      const res = await API.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, form);
+      setForm({ username: "", name: "", email: "", password: "" });
+      toast.success(res.data.message);
+      toast.info("Please login");
       router.push("/login");
+      setLoading(false);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message);
+      setLoading(false);
     }
   };
+
+  if (loading) return <Loader />
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -34,9 +46,27 @@ export default function RegisterPage() {
 
         <input
           type="text"
+          name="name"
+          placeholder="Full Name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full p-2 mb-4 border rounded"
+        />
+
+        <input
+          type="text"
           name="username"
           placeholder="Username"
           value={form.username}
+          onChange={handleChange}
+          className="w-full p-2 mb-4 border rounded"
+        />
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
         />

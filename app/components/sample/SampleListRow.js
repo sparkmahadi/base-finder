@@ -31,10 +31,10 @@ const SampleListRow = ({
       );
     }
 
-    if ((name === "taken" || name === "added_at") && value) {
+    if ((name === "taken" || name === "added_at" || name.includes("date")) && value) {
       try {
         const date = new Date(value);
-        return format(date, "yyyy-MM-dd HH:mm:ss");
+        return format(date, "MM-dd-yyyy HH:mm");  
       } catch (err) {
         return value;
       }
@@ -54,12 +54,12 @@ const SampleListRow = ({
     handleTake(sample._id, purpose);
     closeModal();
   };
-
+// const sample_date = format(new Date(sample.sample_date, "yyyy-MM-dd HH:mm:s"));
   return (
     <>
       <tr>
         <td className="py-2 px-4 border-b">{index + 1}</td>
-        <td className="py-2 px-4 border-b">{renderCell("date", sample.date)}</td>
+        <td className="py-2 px-4 border-b">{renderCell("sample_date", sample.sample_date)}</td>
         <td className="py-2 px-4 border-b">{renderCell("category", sample.category)}</td>
         <td className="py-2 px-4 border-b">{renderCell("style", sample.style)}</td>
         <td className="py-2 px-4 border-b">{renderCell("no_of_sample", sample.no_of_sample)}</td>

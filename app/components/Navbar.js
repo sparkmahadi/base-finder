@@ -38,6 +38,12 @@ export default function Navbar() {
         >
           Add Samples
         </button>
+        <button
+          onClick={() => router.push("/samples/taken-samples")}
+          className="text-white hover:text-gray-300"
+        >
+          Taken Samples
+        </button>
 
         {isAuthenticated ? (
           <>

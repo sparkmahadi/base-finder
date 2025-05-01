@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import SampleListRow from "../components/sample/SampleListRow";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "@/app/context/AuthContext";
+import TakenSampleListRow from "./TakenSampleList";
 
-const SampleList = () => {
+const TakenSamplesList = () => {
   const { isAuthenticated, userInfo } = useAuth();
   const [samples, setSamples] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -27,10 +27,10 @@ const SampleList = () => {
   useEffect(() => {
     fetchSamples();
   }, []);
-
+  
   const fetchSamples = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
       setSamples(res.data.samples);
     } catch (err) {
       toast.error("Failed to fetch samples");
@@ -89,40 +89,31 @@ const SampleList = () => {
     }
   };
 
-  const handleTake = async (id, purpose) => {
-    const body = {
-      taken_by: userInfo?.username, // assuming userInfo is accessible here
-      purpose,
-      taken: new Date().toISOString(),
-    };
-
+  const handlePutBack = async (sampleId, newPosition) => {
+    console.log(sampleId);
     try {
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (res?.data?.success) {
-        const updatedSamples = [...samples];
-        updatedSamples.forEach((s, i) => {
-          if (s._id === id) updatedSamples[i].taken = res.data.taken_at || body.taken;
-        });
-        setSamples(updatedSamples);
-        toast.success(res?.data?.success);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+        method: "PUT",
+        body: JSON.stringify({ position: newPosition , returned_by: userInfo?.username}),
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        // optionally refetch takenSamples or update local state
+      } else {
+        alert("Error: " + data.message);
       }
+      // Refresh sample list if needed
     } catch (err) {
-      toast.error("Failed to take sample");
+      console.error(err);
+      alert("Something went wrong.");
     }
   };
 
 
   const tableHeadings = [
-    "SL", "Date", "Category", "Style", "No. of sample", "Shelf", "Division", "Position", "Taken", "Added at", "Added By", "Released", "Actions",
+    "SL", "Date", "Category", "Style", "No. of sample", "Shelf", "Division", "Position", "Last Taken at", "Last Taken By", "Actions",
   ];
 
   return (
@@ -139,9 +130,8 @@ const SampleList = () => {
         </thead>
         <tbody>
           {samples
-          .filter((sample) => !sample.taken)
           .map((sample, index) => (
-            <SampleListRow
+            <TakenSampleListRow
               key={sample._id}
               sample={sample}
               index={index}
@@ -151,7 +141,7 @@ const SampleList = () => {
               handleEdit={handleEdit}
               handleSave={handleSave}
               handleDelete={handleDelete}
-              handleTake={handleTake}
+              handlePutBack={handlePutBack}
             />
           ))}
         </tbody>
@@ -160,4 +150,4 @@ const SampleList = () => {
   );
 };
 
-export default SampleList;
+export default TakenSamplesList;

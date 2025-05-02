@@ -1,8 +1,8 @@
 'use client';
 
+import { useAuth } from '@/app/context/AuthContext';
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { useAuth } from '../context/AuthContext';
 
 export default function UploadExcel() {
   const { isAuthenticated, userInfo } = useAuth();

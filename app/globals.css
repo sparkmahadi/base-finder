@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Apply background color for light mode */
+.bg-white {
+  background-color: white;
+}
+
+/* Apply background color for dark mode */
+.dark .bg-white {
+  background-color: #2d2d2d; /* Dark background */
+}
+
+/* Light text color */
+.text-black {
+  color: black;
+}
+
+/* Dark text color */
+.dark .text-black {
+  color: white;
+}

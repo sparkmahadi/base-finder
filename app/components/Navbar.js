@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAuth } from "../context/AuthContext"; // adjust path
+import { useAuth } from "../context/AuthContext";
+import { Menu, LogOut, User, PlusCircle, LayoutDashboard, List } from "lucide-react";
+import { useState } from "react";
 
 export default function Navbar() {
   const router = useRouter();
-  const { isAuthenticated, logout, getUserInfo, userInfo } = useAuth();
-  // getUserInfo();
-  console.log(userInfo);
+  const { isAuthenticated, logout, userInfo } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -15,74 +16,108 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-blue-600 p-4 flex justify-between items-center">
-      {/* Logo / Title */}
-      <div
-        className="text-white font-bold text-xl cursor-pointer"
-        onClick={() => router.push("/")}
-      >
-        BaseFinder
+    <nav className="bg-blue-600 shadow-md px-6 py-4">
+      <div className="max-w-7xl mx-auto flex justify-between items-center">
+        {/* Logo */}
+        <div
+          className="text-white font-extrabold text-2xl cursor-pointer tracking-wide"
+          onClick={() => router.push("/")}
+        >
+          BaseFinder
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex space-x-6 items-center">
+          <NavButton label="Samples" icon={<List size={18} />} onClick={() => router.push("/samples")} />
+          <NavButton label="Add Sample" icon={<PlusCircle size={18} />} onClick={() => router.push("/samples/add-sample")} />
+          <NavButton label="Taken Samples" icon={<List size={18} />} onClick={() => router.push("/samples/taken-samples")} />
+          
+          {isAuthenticated ? (
+            <>
+              <NavButton label="Dashboard" icon={<LayoutDashboard size={18} />} onClick={() => router.push("/dashboard")} />
+              <div className="relative group">
+                <button className="text-white hover:text-gray-200 font-medium flex items-center gap-1">
+                  <User size={18} />
+                  {userInfo?.username || "User"}
+                </button>
+                <div className="absolute hidden group-hover:block bg-white text-gray-700 mt-2 right-0 shadow-md rounded-md overflow-hidden w-40 z-20">
+                  <div
+                    onClick={() => router.push("/profile")}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Profile
+                  </div>
+                  <div
+                    onClick={handleLogout}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-1"
+                  >
+                    <LogOut size={16} /> Logout
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <NavButton label="Login" onClick={() => router.push("/login")} />
+              <NavButton label="Register" onClick={() => router.push("/register")} />
+            </>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div className="md:hidden">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <Menu className="text-white" />
+          </button>
+        </div>
       </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex space-x-4">
-        <button
-          onClick={() => router.push("/samples")}
-          className="text-white hover:text-gray-300"
-        >
-          Samples
-        </button>
-        <button
-          onClick={() => router.push("/samples/add-sample")}
-          className="text-white hover:text-gray-300"
-        >
-          Add Samples
-        </button>
-        <button
-          onClick={() => router.push("/samples/taken-samples")}
-          className="text-white hover:text-gray-300"
-        >
-          Taken Samples
-        </button>
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-blue-700 px-4 py-3 space-y-3 text-white">
+          <MobileLink label="Samples" onClick={() => router.push("/samples")} />
+          <MobileLink label="Add Sample" onClick={() => router.push("/samples/add-sample")} />
+          <MobileLink label="Taken Samples" onClick={() => router.push("/samples/taken-samples")} />
 
-        {isAuthenticated ? (
-          <>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="text-white hover:text-gray-300"
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => router.push("/profile")}
-              className="text-white hover:text-gray-300"
-            >
-              {userInfo?.username}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-white hover:text-gray-300"
-            >
-              Logout
-            </button>
-          </> 
-        ) : (
-          <>
-            <button
-              onClick={() => router.push("/login")}
-              className="text-white hover:text-gray-300"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => router.push("/register")}
-              className="text-white hover:text-gray-300"
-            >
-              Register
-            </button>
-          </>
-        )}
-      </div>
+          {isAuthenticated ? (
+            <>
+              <MobileLink label="Dashboard" onClick={() => router.push("/dashboard")} />
+              <MobileLink label="Profile" onClick={() => router.push("/profile")} />
+              <MobileLink label="Logout" onClick={handleLogout} />
+            </>
+          ) : (
+            <>
+              <MobileLink label="Login" onClick={() => router.push("/login")} />
+              <MobileLink label="Register" onClick={() => router.push("/register")} />
+            </>
+          )}
+        </div>
+      )}
     </nav>
+  );
+}
+
+// Desktop Nav Button
+function NavButton({ label, icon, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-white hover:text-gray-200 font-medium flex items-center gap-1 transition"
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+// Mobile Nav Item
+function MobileLink({ label, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className="block text-white font-medium hover:text-gray-300 cursor-pointer"
+    >
+      {label}
+    </div>
   );
 }

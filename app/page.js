@@ -51,7 +51,7 @@ export default function Home() {
       {/* Testimonials */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-100 p-6 rounded-2xl shadow">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">What Our Users Say</h2>
-        <blockquote className="italic text-gray-700">“The best way we've ever tracked garment samples. It's fast, transparent, and smart.”</blockquote>
+        <blockquote className="italic text-gray-700">“The best way we&apos;ve ever tracked garment samples. It&apos;s fast, transparent, and smart.”</blockquote>
         <p className="mt-2 text-right text-sm text-gray-500">– QA Department, TrendTex Ltd.</p>
       </div>
 

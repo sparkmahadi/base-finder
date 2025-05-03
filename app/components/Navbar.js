@@ -30,8 +30,9 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-6 items-center">
           <NavButton label="Samples" icon={<List size={18} />} onClick={() => router.push("/samples")} />
           <NavButton label="Add Sample" icon={<PlusCircle size={18} />} onClick={() => router.push("/samples/add-sample")} />
+          <NavButton label="Upload excel" icon={<PlusCircle size={18} />} onClick={() => router.push("/samples/add-sample/upload-excel")} />
           <NavButton label="Taken Samples" icon={<List size={18} />} onClick={() => router.push("/samples/taken-samples")} />
-          
+
           {isAuthenticated ? (
             <>
               <NavButton label="Dashboard" icon={<LayoutDashboard size={18} />} onClick={() => router.push("/dashboard")} />
@@ -77,6 +78,7 @@ export default function Navbar() {
         <div className="md:hidden bg-blue-700 px-4 py-3 space-y-3 text-white">
           <MobileLink label="Samples" onClick={() => router.push("/samples")} />
           <MobileLink label="Add Sample" onClick={() => router.push("/samples/add-sample")} />
+          <MobileLink label="Upload excel" onClick={() => router.push("/samples/add-sample/upload-excel")} />
           <MobileLink label="Taken Samples" onClick={() => router.push("/samples/taken-samples")} />
 
           {isAuthenticated ? (
@@ -102,7 +104,7 @@ function NavButton({ label, icon, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="text-white hover:text-gray-200 font-medium flex items-center gap-1 transition"
+      className="text-white hover:text-gray-200 font-medium flex items-center gap-1 transition cursor-pointer"
     >
       {icon}
       {label}

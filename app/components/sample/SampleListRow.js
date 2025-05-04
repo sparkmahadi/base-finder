@@ -10,7 +10,7 @@ const SampleListRow = ({
   editingIndex,
   editedSample,
   handleChange,
-  handleEdit,
+  handleEdit,handleCancelEdit,
   handleSave,
   handleTake,
   handleDelete
@@ -72,12 +72,20 @@ const SampleListRow = ({
         <td className="py-2 px-4 border-b">{renderCell("released", sample.released)}</td>
         <td className="py-2 px-4 border-b space-y-1">
           {editingIndex === index ? (
-            <button
+            <div>
+              <button
               onClick={() => handleSave(sample._id)}
               className="bg-blue-500 text-white px-2 py-1 rounded w-full"
             >
               Save
             </button>
+            <button
+              onClick={() => handleCancelEdit()}
+              className="bg-blue-500 text-white px-2 py-1 rounded w-full"
+            >
+              Cancel
+            </button>
+            </div>
           ) : (
             <button
               onClick={() => handleEdit(index)}
@@ -91,6 +99,12 @@ const SampleListRow = ({
             className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
           >
             Take
+          </button>
+          <button
+            onClick={()=>handleDelete(sample._id)}
+            className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
+          >
+            Delete
           </button>
         </td>
       </tr>

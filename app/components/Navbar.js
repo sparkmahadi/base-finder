@@ -3,16 +3,55 @@
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { Menu, LogOut, User, PlusCircle, LayoutDashboard, List } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const router = useRouter();
   const { isAuthenticated, logout, userInfo } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [submenuVisible, setSubmenuVisible] = useState(false);
+  const userMenuRef = useRef(null); // Ref for the user menu
+  const userIconRef = useRef(null); // Ref for the user icon button
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  // Close submenu if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        userMenuRef.current && !userMenuRef.current.contains(event.target) &&
+        userIconRef.current && !userIconRef.current.contains(event.target)
+      ) {
+        setSubmenuVisible(false); // Close submenu if clicked outside
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
+  const handleSubmenuToggle = () => {
+    setSubmenuVisible((prev) => !prev); // Toggle submenu on click
+  };
+
+  const handleSubmenuItemClick = () => {
+    setSubmenuVisible(false); // Close submenu after clicking on an item
+  };
+
+  const handleMouseEnter = () => {
+    setSubmenuVisible(true); // Show submenu on hover
+  };
+
+  const handleMouseLeave = () => {
+    if (!submenuVisible) {
+      setSubmenuVisible(false); // Hide submenu if hover is removed and submenu is not clicked
+    }
   };
 
   return (
@@ -36,25 +75,37 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               <NavButton label="Dashboard" icon={<LayoutDashboard size={18} />} onClick={() => router.push("/dashboard")} />
-              <div className="relative group">
-                <button className="text-white hover:text-gray-200 font-medium flex items-center gap-1">
+              <div
+                className="relative group"
+                ref={userMenuRef}
+                onMouseEnter={handleMouseEnter} // Show submenu on hover
+                onMouseLeave={handleMouseLeave} // Hide submenu when hover is removed
+              >
+                <button
+                  className="text-white hover:text-gray-200 font-medium flex items-center gap-1"
+                  onClick={handleSubmenuToggle} // Toggle submenu visibility on click
+                  ref={userIconRef}
+                >
                   <User size={18} />
                   {userInfo?.username || "User"}
                 </button>
-                <div className="absolute hidden group-hover:block bg-white text-gray-700 mt-2 right-0 shadow-md rounded-md overflow-hidden w-40 z-20">
-                  <div
-                    onClick={() => router.push("/profile")}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                  >
-                    Profile
+                {/* Submenu */}
+                {submenuVisible && (
+                  <div className="absolute bg-white text-gray-700 mt-2 right-0 shadow-md rounded-md overflow-hidden w-40 z-20">
+                    <div
+                      onClick={() => { router.push("/profile"); handleSubmenuItemClick(); }} // Hide submenu after clicking item
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      Profile
+                    </div>
+                    <div
+                      onClick={() => { handleLogout(); handleSubmenuItemClick(); }} // Hide submenu after clicking logout
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-1"
+                    >
+                      <LogOut size={16} /> Logout
+                    </div>
                   </div>
-                  <div
-                    onClick={handleLogout}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-1"
-                  >
-                    <LogOut size={16} /> Logout
-                  </div>
-                </div>
+                )}
               </div>
             </>
           ) : (

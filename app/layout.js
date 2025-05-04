@@ -3,6 +3,7 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import "./globals.css";
 import { ToastContainer } from "react-toastify";
+import RouteLoader from "./components/RouteLoader";
 
 export const metadata = {
   title: "BaseFinder",

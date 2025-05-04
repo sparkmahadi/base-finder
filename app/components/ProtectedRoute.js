@@ -2,23 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const { isAuthenticated, loading } = useAuth(); // using loading from context
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      router.replace("/login"); // Instantly send to login
-    } else {
-      setIsAuthenticated(true); // Allow showing the page
+    if (!loading && !isAuthenticated) {
+      // Redirect to login if not authenticated
+      router.replace("/login");
     }
-  }, [router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (isAuthenticated === null) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  // If still loading, show a loading spinner
+  if (loading) {
+    return <Loader />;
   }
-  return children; // If authenticated, show the real page
+
+  // If not authenticated, don't render children (handled by useEffect)
+  if (!isAuthenticated) {
+    return <h3>Loading  & Authenticating.......</h3>; // Optionally, return nothing while redirecting
+  }
+
+  return children; // If authenticated, render the children (protected content)
 }

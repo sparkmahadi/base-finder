@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import SampleListRow from "../components/sample/SampleListRow";
 import { useAuth } from "../context/AuthContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const SampleList = () => {
   const { isAuthenticated, userInfo } = useAuth();
@@ -126,38 +127,38 @@ const SampleList = () => {
   ];
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white border border-gray-300 text-sm">
-        <thead className="bg-gray-100">
-          <tr>
-            {tableHeadings?.map((head) => (
-              <th key={head} className="py-2 px-4 border-b font-medium">
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {samples
-          .filter((sample) => !sample.taken)
-          .map((sample, index) => (
-            <SampleListRow
-              key={sample._id}
-              sample={sample}
-              index={index}
-              editingIndex={editingIndex}
-              editedSample={editedSample}
-              handleChange={handleChange}
-              handleEdit={handleEdit}
-              handleSave={handleSave}
-              handleDelete={handleDelete}
-              handleTake={handleTake}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-300 text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              {tableHeadings?.map((head) => (
+                <th key={head} className="py-2 px-4 border-b font-medium">
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {samples
+              .filter((sample) => !sample.taken)
+              .map((sample, index) => (
+                <SampleListRow
+                  key={sample._id}
+                  sample={sample}
+                  index={index}
+                  editingIndex={editingIndex}
+                  editedSample={editedSample}
+                  handleChange={handleChange}
+                  handleEdit={handleEdit}
+                  handleSave={handleSave}
+                  handleDelete={handleDelete}
+                  handleTake={handleTake}
+                />
+              ))}
+          </tbody>
+        </table>
+      </div>
+      );
 };
 
-export default SampleList;
+      export default SampleList;

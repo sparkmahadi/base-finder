@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import ReactDOM from "react-dom"; // Import ReactDOM for creating portal
+import ReactDOM from "react-dom"; // 
+import { useRouter } from "next/navigation";
 
 const SampleListRow = ({
   sample,
@@ -10,12 +11,12 @@ const SampleListRow = ({
   editingIndex,
   editedSample,
   handleChange,
-  handleEdit,handleCancelEdit,
+  handleEdit, handleCancelEdit,
   handleSave,
   handleTake,
   handleDelete
 }) => {
-
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [purpose, setPurpose] = useState("");
 
@@ -34,7 +35,7 @@ const SampleListRow = ({
     if ((name === "taken" || name === "added_at" || name.includes("date")) && value) {
       try {
         const date = new Date(value);
-        return format(date, "MM-dd-yyyy HH:mm");  
+        return format(date, "MM-dd-yyyy HH:mm");
       } catch (err) {
         return value;
       }
@@ -54,7 +55,7 @@ const SampleListRow = ({
     handleTake(sample._id, purpose);
     closeModal();
   };
-// const sample_date = format(new Date(sample.sample_date, "yyyy-MM-dd HH:mm:s"));
+  // const sample_date = format(new Date(sample.sample_date, "yyyy-MM-dd HH:mm:s"));
   return (
     <>
       <tr>
@@ -66,25 +67,43 @@ const SampleListRow = ({
         <td className="py-2 px-4 border-b">{renderCell("shelf", sample.shelf)}</td>
         <td className="py-2 px-4 border-b">{renderCell("division", sample.division)}</td>
         <td className="py-2 px-4 border-b">{renderCell("position", sample.position)}</td>
-        <td className="py-2 px-4 border-b">{renderCell("taken", sample.taken)}</td>
+        <td className="py-2 px-4 border-b">{renderCell("availability", sample.availability === "no" ? "Taken /Not Available" : "Yes")}</td>
         <td className="py-2 px-4 border-b">{renderCell("added_at", sample.added_at)}</td>
-        <td className="py-2 px-4 border-b">{renderCell("added_by", sample.added_by)}</td>
-        <td className="py-2 px-4 border-b">{renderCell("released", sample.released)}</td>
+        <td className="py-2 px-4 border-b">{renderCell("last_taken_by", sample.last_taken_by)}</td>
+        <td className="py-2 px-4 border-b">{renderCell("released", sample.released ? sample.released : "-")}</td>
         <td className="py-2 px-4 border-b space-y-1">
+          <div className="flex gap-2">
+            <button
+              onClick={openModal}
+              className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
+            >
+              Take
+            </button>
+            <button
+              onClick={() => handleDelete(sample._id)}
+              className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
+            >
+              Delete
+            </button>
+            
+            <button onClick={() => router.push(`/samples/${sample._id}`)} className="bg-blue-600 text-white px-2 py-1 rounded w-full text-xs mt-1">
+              Details
+            </button>
+          </div>
           {editingIndex === index ? (
             <div>
               <button
-              onClick={() => handleSave(sample._id)}
-              className="bg-blue-500 text-white px-2 py-1 rounded w-full"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => handleCancelEdit()}
-              className="bg-blue-500 text-white px-2 py-1 rounded w-full"
-            >
-              Cancel
-            </button>
+                onClick={() => handleSave(sample._id)}
+                className="bg-blue-500 text-white px-2 py-1 rounded w-full"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => handleCancelEdit()}
+                className="bg-blue-500 text-white px-2 py-1 rounded w-full"
+              >
+                Cancel
+              </button>
             </div>
           ) : (
             <button
@@ -94,18 +113,6 @@ const SampleListRow = ({
               Edit
             </button>
           )}
-          <button
-            onClick={openModal}
-            className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
-          >
-            Take
-          </button>
-          <button
-            onClick={()=>handleDelete(sample._id)}
-            className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
-          >
-            Delete
-          </button>
         </td>
       </tr>
 

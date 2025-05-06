@@ -30,7 +30,7 @@ const TakenSamplesList = () => {
   
   const fetchSamples = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?availability=no`);
       setSamples(res.data.samples);
     } catch (err) {
       toast.error("Failed to fetch samples");

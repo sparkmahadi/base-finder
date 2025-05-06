@@ -1,19 +1,20 @@
-// components/CategoriesList.js
 "use client"
-import { getCategories, deleteCategory, updateCategory } from '@/lib/categoryAPI';
-// components/ListCategories.js
-
+import { getCategories, updateCategory } from '@/lib/categoryAPI';
 import { useState, useEffect } from 'react';
-// import { getCategories, deleteCategory, updateCategory } from '../../lib/categoryAPI';
+import Loader from '../components/Loader';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 export default function ListCategories() {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [funcLoading, setFuncLoading] = useState(false);
   const [error, setError] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null); // For editing a category
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setLoading(true);
       try {
         const data = await getCategories();
         setCategories(data);
@@ -27,21 +28,31 @@ export default function ListCategories() {
   }, []);
 
   // Handle category deletion
-  const handleDelete = async (cat_id) => {
-      setLoading(true);
-    try {
-      await deleteCategory(cat_id);
-      getCategories();
-    //   setCategories(categories.filter((category) => category.cat_id !== cat_id)); // Remove the deleted category from the state
-     setLoading(false);
-    } catch (err) {
-      setError('Error deleting category');
-      console.error('Error deleting category:', err);
-     setLoading(false);
+  const handleDelete = async (id) => {
+    const confirm = window.confirm(`Are you sure to delete category no. ${id}?`);
+    if (confirm) {
+      setFuncLoading(true);
+      try {
+        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        console.log("res", res);
+        if (res?.data?.success) {
+          setCategories(categories.filter((cat) => cat._id !== id));
+          toast.success("Category deleted successfully");
+          setFuncLoading(false);
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        toast.error("Failed to delete category");
+        setFuncLoading(false);
+        return error;
+      }
+    } else toast.info("Cancelled command");
 
-    }
   };
-
   // Handle category editing
   const handleEdit = (category) => {
     setEditingCategory(category); // Set the category to be edited
@@ -62,12 +73,8 @@ export default function ListCategories() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center mt-6">
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    );
+  if (loading || funcLoading) {
+    return <Loader />
   }
 
   if (error) {
@@ -81,10 +88,10 @@ export default function ListCategories() {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Categories List</h2>
-      
+
       <div className="space-y-4">
-        {categories.map((category) => (
-          <div key={category.cat_id} className="p-4 bg-gray-100 rounded-md shadow-md">
+        {categories?.map((category) => (
+          <div key={category._id} className="p-4 bg-gray-100 rounded-md shadow-md">
             <h3 className="text-lg font-semibold text-gray-700">{category.cat_name}</h3>
             <p className="text-gray-600">Category ID: {category.cat_id}</p>
             <p className="text-gray-600">Buyer: {category.buyer_name}</p>
@@ -102,7 +109,7 @@ export default function ListCategories() {
 
               {/* Delete Button */}
               <button
-                onClick={() => handleDelete(category.cat_id)}
+                onClick={() => handleDelete(category._id)}
                 className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
               >
                 Delete
@@ -116,7 +123,7 @@ export default function ListCategories() {
       {editingCategory && (
         <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
           <h3 className="text-2xl font-semibold text-gray-700 mb-6">Edit Category</h3>
-          
+
           <form
             onSubmit={(e) => {
               e.preventDefault();

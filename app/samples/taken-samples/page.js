@@ -27,10 +27,10 @@ const TakenSamplesList = () => {
   useEffect(() => {
     fetchSamples();
   }, []);
-  
+
   const fetchSamples = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?availability=no`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
       setSamples(res.data.samples);
     } catch (err) {
       toast.error("Failed to fetch samples");
@@ -94,7 +94,7 @@ const TakenSamplesList = () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
         method: "PUT",
-        body: JSON.stringify({ position: newPosition , returned_by: userInfo?.username}),
+        body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
         headers: { "Content-Type": "application/json" }
       });
       const data = await res.json();
@@ -129,21 +129,24 @@ const TakenSamplesList = () => {
           </tr>
         </thead>
         <tbody>
-          {samples
-          .map((sample, index) => (
-            <TakenSampleListRow
-              key={sample._id}
-              sample={sample}
-              index={index}
-              editingIndex={editingIndex}
-              editedSample={editedSample}
-              handleChange={handleChange}
-              handleEdit={handleEdit}
-              handleSave={handleSave}
-              handleDelete={handleDelete}
-              handlePutBack={handlePutBack}
-            />
-          ))}
+          {samples?.length > 0 ?
+            samples
+              .map((sample, index) => (
+                <TakenSampleListRow
+                  key={sample._id}
+                  sample={sample}
+                  index={index}
+                  editingIndex={editingIndex}
+                  editedSample={editedSample}
+                  handleChange={handleChange}
+                  handleEdit={handleEdit}
+                  handleSave={handleSave}
+                  handleDelete={handleDelete}
+                  handlePutBack={handlePutBack}
+                />
+              ))
+            :
+            <tr><td><p>No samples are available.</p></td></tr>}
         </tbody>
       </table>
     </div>

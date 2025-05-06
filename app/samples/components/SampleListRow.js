@@ -2,17 +2,12 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import ReactDOM from "react-dom"; // 
+import ReactDOM from "react-dom";
 import { useRouter } from "next/navigation";
 
 const SampleListRow = ({
   sample,
   index,
-  editingIndex,
-  editedSample,
-  handleChange,
-  handleEdit, handleCancelEdit,
-  handleSave,
   handleTake,
   handleDelete
 }) => {
@@ -21,17 +16,6 @@ const SampleListRow = ({
   const [purpose, setPurpose] = useState("");
 
   const renderCell = (name, value) => {
-    if (editingIndex === index) {
-      return (
-        <input
-          name={name}
-          value={editedSample[name]}
-          onChange={handleChange}
-          className="border p-1 w-full"
-        />
-      );
-    }
-
     if ((name === "taken" || name === "added_at" || name.includes("date")) && value) {
       try {
         const date = new Date(value);
@@ -40,7 +24,6 @@ const SampleListRow = ({
         return value;
       }
     }
-
     return value;
   };
 
@@ -55,7 +38,7 @@ const SampleListRow = ({
     handleTake(sample._id, purpose);
     closeModal();
   };
-  // const sample_date = format(new Date(sample.sample_date, "yyyy-MM-dd HH:mm:s"));
+
   return (
     <>
       <tr>
@@ -75,48 +58,26 @@ const SampleListRow = ({
           <div className="flex gap-2">
             <button
               onClick={openModal}
-              className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
+              className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
             >
               Take
             </button>
             <button
               onClick={() => handleDelete(sample._id)}
-              className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1"
+              className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
             >
               Delete
             </button>
-            
-            <button onClick={() => router.push(`/samples/${sample._id}`)} className="bg-blue-600 text-white px-2 py-1 rounded w-full text-xs mt-1">
+            <button
+              onClick={() => router.push(`/samples/${sample._id}`)}
+              className="bg-blue-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
+            >
               Details
             </button>
           </div>
-          {editingIndex === index ? (
-            <div>
-              <button
-                onClick={() => handleSave(sample._id)}
-                className="bg-blue-500 text-white px-2 py-1 rounded w-full"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => handleCancelEdit()}
-                className="bg-blue-500 text-white px-2 py-1 rounded w-full"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => handleEdit(index)}
-              className="bg-gray-500 text-white px-2 py-1 rounded w-full"
-            >
-              Edit
-            </button>
-          )}
         </td>
       </tr>
 
-      {/* Modal using React Portal */}
       {isModalOpen &&
         ReactDOM.createPortal(
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
@@ -145,7 +106,7 @@ const SampleListRow = ({
               </div>
             </div>
           </div>,
-          document.body // Render the modal in the body
+          document.body
         )}
     </>
   );

@@ -10,6 +10,16 @@ export default function UploadExcel() {
   const [selectedSamples, setSelectedSamples] = useState(new Set());
   const [loading, setLoading] = useState(false);
 
+  // Function to convert Excel date (serial number) to JavaScript Date
+  const excelDateToJSDate = (serial) => {
+    if (typeof serial === 'number') {
+      const epoch = new Date(1899, 11, 31); // Excel's epoch is 31 Dec 1899
+      epoch.setDate(epoch.getDate() + serial);
+      return epoch;
+    }
+    return new Date(serial); // Fallback if the date is already a valid string
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -21,21 +31,32 @@ export default function UploadExcel() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet);
 
-      const formattedSamples = rows.map((row) => ({
-        sample_date: new Date(row.Date),
-        buyer: row.Buyer || '',
-        category: row.Category || '',
-        style: row.Style || '',
-        no_of_sample: Number(row['No. of sample']) || 0,
-        shelf: Number(row.Shelf) || 0,
-        division: Number(row.Division) || 0,
-        position: isNaN(row.Position) ? 0 : Number(row.Position),
-        status: row.Status || '',
-        season: row.Season || '',
-        comments: row.Comments || '',
-        released: row.Released ? new Date(row.Released) : null,
-        added_by: userInfo?.username
-      }));
+      const formattedSamples = rows.map((row) => {
+        // Convert Excel date serial number to JavaScript Date
+        const sampleDate = excelDateToJSDate(row.Date);
+        const validSampleDate = isNaN(sampleDate) ? 'Invalid Date' : sampleDate;
+
+        // Handle 'Released' field to handle possible non-date values like 'not yet'
+        const releasedDate = row.Released && !isNaN(new Date(row.Released))
+          ? new Date(row.Released)
+          : null;
+
+        return {
+          sample_date: validSampleDate,
+          buyer: row.Buyer || '',
+          category: row.Category || '',
+          style: row.Style || '',
+          no_of_sample: Number(row['No. of sample']) || 0,
+          shelf: Number(row.Shelf) || 0,
+          division: Number(row.Division) || 0,
+          position: isNaN(row.Position) ? 0 : Number(row.Position),
+          status: row.Status || '',
+          season: row.Season || '',
+          comments: row.Comments || '',
+          released: releasedDate,
+          added_by: userInfo?.username
+        };
+      });
 
       setSamples(formattedSamples);
       setSelectedSamples(new Set(formattedSamples.map((_, idx) => idx)));
@@ -60,7 +81,15 @@ export default function UploadExcel() {
       return;
     }
 
-    const selected = Array.from(selectedSamples).map((i) => samples[i]);
+    const selected = Array.from(selectedSamples).map((i) => {
+      const s = samples[i];
+      return {
+        ...s,
+        sample_date: s.sample_date instanceof Date ? s.sample_date.toISOString() : s.sample_date,
+        released: s.released instanceof Date ? s.released.toISOString() : null,
+      };
+    });
+        
 
     try {
       setLoading(true);
@@ -69,6 +98,7 @@ export default function UploadExcel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ samples: selected }),
       });
+      console.log(selected);
 
       const data = await res.json();
       alert(data.message);
@@ -117,11 +147,15 @@ export default function UploadExcel() {
                         onChange={() => handleSelectSample(index)}
                       />
                     </td>
-                    <td className="px-2 py-2">{sample.sample_date.toLocaleDateString()}</td>
+                    <td className="px-2 py-2">
+                      {sample.sample_date instanceof Date && !isNaN(sample.sample_date)
+                        ? sample.sample_date.toLocaleDateString()
+                        : 'Invalid Date'}
+                    </td>
                     <td className="px-2 py-2">{sample.buyer}</td>
                     <td className="px-2 py-2">{sample.category}</td>
                     <td className="px-2 py-2">{sample.style}</td>
-                    <td className="px-2 py-2">{sample.numberOfSamples}</td>
+                    <td className="px-2 py-2">{sample.no_of_sample}</td>
                     <td className="px-2 py-2">{sample.shelf}</td>
                     <td className="px-2 py-2">{sample.division}</td>
                     <td className="px-2 py-2">{sample.position}</td>
@@ -129,7 +163,9 @@ export default function UploadExcel() {
                     <td className="px-2 py-2">{sample.season}</td>
                     <td className="px-2 py-2">{sample.comments}</td>
                     <td className="px-2 py-2">
-                      {sample.released ? new Date(sample.released).toLocaleDateString() : 'N/A'}
+                      {sample.released
+                        ? new Date(sample.released).toLocaleDateString()
+                        : 'N/A'}
                     </td>
                     <td className="px-2 py-2">{sample.added_by}</td>
                   </tr>

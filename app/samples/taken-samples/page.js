@@ -9,24 +9,11 @@ import TakenSampleListRow from "./TakenSampleList";
 const TakenSamplesList = () => {
   const { isAuthenticated, userInfo } = useAuth();
   const [samples, setSamples] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editedSample, setEditedSample] = useState({
-    date: "",
-    category: "",
-    style: "",
-    no_of_sample: "",
-    shelf: "",
-    division: "",
-    position: "",
-    taken: "",
-    added_at: "",
-    added_by: "",
-    released: "",
-  });
+  const [refetch, setRefetch] = useState(false);
 
   useEffect(() => {
     fetchSamples();
-  }, []);
+  }, [refetch]);
 
   const fetchSamples = async () => {
     try {
@@ -34,58 +21,6 @@ const TakenSamplesList = () => {
       setSamples(res.data.samples);
     } catch (err) {
       toast.error("Failed to fetch samples");
-    }
-  };
-
-  const handleEdit = (index) => {
-    const sample = samples[index];
-    setEditingIndex(index);
-    setEditedSample({ ...sample });
-  };
-
-  const handleChange = (e) => {
-
-    const { name, value } = e.target;
-    setEditedSample((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = async (id) => {
-    try {
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`,
-        editedSample,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (res?.data?.success) {
-        const updatedSamples = [...samples];
-        updatedSamples[editingIndex] = { ...updatedSamples[editingIndex], ...editedSample };
-        setSamples(updatedSamples);
-        setEditingIndex(null);
-        toast.success("Sample updated successfully");
-      }
-    } catch (err) {
-      toast.error("Failed to update sample");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (res?.data?.success) {
-        setSamples(samples.filter((sample) => sample._id !== id));
-        toast.success("Sample deleted successfully");
-      }
-    } catch (err) {
-      toast.error("Failed to delete sample");
     }
   };
 
@@ -99,8 +34,9 @@ const TakenSamplesList = () => {
       });
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
-        // optionally refetch takenSamples or update local state
+        toast.success(data?.message);
+        setSamples((prev) => prev.filter((s) => s._id !== sampleId));
+        setRefetch(!refetch);
       } else {
         alert("Error: " + data.message);
       }
@@ -117,7 +53,7 @@ const TakenSamplesList = () => {
   ];
 
   return (
-    <div className="overflow-x-auto">
+    <div className="max-w-7xl mx-auto">
       <table className="min-w-full bg-white border border-gray-300 text-sm">
         <thead className="bg-gray-100">
           <tr>
@@ -136,12 +72,6 @@ const TakenSamplesList = () => {
                   key={sample._id}
                   sample={sample}
                   index={index}
-                  editingIndex={editingIndex}
-                  editedSample={editedSample}
-                  handleChange={handleChange}
-                  handleEdit={handleEdit}
-                  handleSave={handleSave}
-                  handleDelete={handleDelete}
                   handlePutBack={handlePutBack}
                 />
               ))

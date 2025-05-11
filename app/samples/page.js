@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import SampleListRow from "./components/SampleListRow";
@@ -9,38 +9,34 @@ import Loader from "../components/Loader";
 
 const SampleList = () => {
   const { isAuthenticated, userInfo } = useAuth();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [refetch, setRefetch] = useState(false);
   const [samples, setSamples] = useState([]);
   const [funcLoading, setFuncLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [loading, setLoading] = useState(false);
-  const loaderRef = useRef(null); // 👈 for intersection observer
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTakenStatus, setFilterTakenStatus] = useState("not_taken");
   const [filters, setFilters] = useState({
-    date: "",
-    category: "",
-    style: "",
-    no_of_sample: "",
-    shelf: "",
-    division: "",
-    position: "",
-    availability: "",
-    added_at: "",
-    last_taken_by: "",
-    released: "",
+    date: "All",
+    category: "All",
+    style: "All",
+    buyer: "All",
+    shelf: "All",
+    division: "All",
+    position: "All",
+    availability: "All",
+    added_at: "All",
+    last_taken_by: "All",
+    released: "All",
   });
+  
 
   const [dropdownOptions, setDropdownOptions] = useState({
     category: [""],
-    no_of_sample: [""],
+    buyer: [""],
     shelf: [""],
     division: [""],
     position: [""],
     availability: [""],
-    added_by: [""],
     released: [""],
     style: [""],
     date: [""],
@@ -48,14 +44,12 @@ const SampleList = () => {
     last_taken_by: [""],
   });
 
-
   const extractDropdownOptions = (samplesData) => {
-    const getUnique = (key) =>
-      ["", ...Array.from(new Set(samplesData.map((s) => s[key]).filter(Boolean)))];
-
+    const getUnique = (key) => ["All", ...Array.from(new Set(samplesData.map((s) => s[key]).filter(Boolean)))];
+  
     return {
       category: getUnique("category"),
-      no_of_sample: getUnique("no_of_sample"),
+      buyer: getUnique("buyer"),
       shelf: getUnique("shelf"),
       division: getUnique("division"),
       position: getUnique("position"),
@@ -68,69 +62,23 @@ const SampleList = () => {
       last_taken_by: getUnique("last_taken_by"),
     };
   };
-
-
-
+  
 
   useEffect(() => {
-    fetchSamples(currentPage);
-  }, []);
+    fetchSamples();
+  }, [refetch]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const target = entries[0];
-        if (target.isIntersecting && !loadingMore && currentPage < totalPages) {
-          loadMoreSamples();
-        }
-      },
-      {
-        root: null,
-        rootMargin: "200px",
-        threshold: 0.1,
-      }
-    );
-
-    if (loaderRef.current) observer.observe(loaderRef.current);
-    return () => {
-      if (loaderRef.current) observer.unobserve(loaderRef.current);
-    };
-  }, [loaderRef.current, currentPage, totalPages, loadingMore]);
-
-  const fetchSamples = async (page = 1) => {
+  const fetchSamples = async () => {
     try {
       setFuncLoading(true);
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?page=${page}&limit=50`
-      );
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
       const data = res.data.samples || [];
       setSamples(data);
       setDropdownOptions(extractDropdownOptions(data));
-      setTotalPages(res?.data?.totalPages);
-      setFuncLoading(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to fetch samples");
-      setFuncLoading(false);
-    }
-  };
-
-
-  const loadMoreSamples = async () => {
-    setLoadingMore(true);
-    try {
-      const nextPage = currentPage + 1;
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?page=${nextPage}&limit=50`
-      );
-      if (res?.data?.samples?.length > 0) {
-        setSamples((prev) => [...prev, ...res.data.samples]);
-        setCurrentPage(nextPage);
-        setTotalPages(res?.data?.totalPages);
-      }
-    } catch (err) {
-      toast.error("Failed to load more samples");
     } finally {
-      setLoadingMore(false);
+      setFuncLoading(false);
     }
   };
 
@@ -140,16 +88,12 @@ const SampleList = () => {
 
     setFuncLoading(true);
     try {
-      const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       if (res?.data?.success) {
         setSamples((prev) => prev.filter((s) => s._id !== id));
+        setRefetch((prev) => !prev);
         toast.success("Sample deleted successfully");
       }
     } catch {
@@ -167,22 +111,12 @@ const SampleList = () => {
     };
 
     try {
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      console.log(res.data);
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`, body, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       if (res?.data?.success) {
-        const updatedSamples = [...samples];
-        updatedSamples.forEach((s, i) => {
-          if (s._id === id) updatedSamples[i].taken = res.data.taken_at || body.taken;
-        });
-        setSamples(updatedSamples);
+        setSamples((prev) => prev.filter((s) => s._id !== id));
+        setRefetch((prev) => !prev);
         toast.success(res?.data?.message);
       }
     } catch {
@@ -197,18 +131,17 @@ const SampleList = () => {
 
   const clearAllFilters = () => {
     setSearchTerm("");
-    setFilterTakenStatus("not_taken");
     setFilters({
       date: "",
       category: "",
       style: "",
-      no_of_sample: "",
+      buyer: "",
       shelf: "",
       division: "",
       position: "",
-      taken: "",
+      availability: "",
       added_at: "",
-      added_by: "",
+      last_taken_by: "",
       released: "",
     });
   };
@@ -218,33 +151,23 @@ const SampleList = () => {
       sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
-
+  
     const matchesFilters = Object.entries(filters).every(([key, value]) => {
-      if (!value.trim()) return true;
-
-      if (key === "availability") {
-        const actual = sample.availability === "no" ? "Taken /Not Available" : "Yes";
-        return actual.toLowerCase() === value.toLowerCase();
-      }
-
+      // Skip filtering if the value is "All" or empty
+      if (!value.trim() || value === "All") return true;
       return sample[key]?.toString().toLowerCase().includes(value.toLowerCase());
     });
-
+  
     return matchesSearch && matchesFilters;
   });
-
-
-  // const tableHeadings = [
-  //   "SL", "Date", "Category", "Style", "No. of sample", "Shelf", "Division", "Position",
-  //   "Availability", "Added at", "Last Taken By", "Released", "Actions",
-  // ];
+  
 
   const tableHeadings = [
     { label: "SL" },
     { label: "Date", key: "date" },
     { label: "Category", key: "category" },
     { label: "Style", key: "style" },
-    { label: "No. of sample", key: "no_of_sample" },
+    { label: "Buyer", key: "buyer" },
     { label: "Shelf", key: "shelf" },
     { label: "Division", key: "division" },
     { label: "Position", key: "position" },
@@ -252,30 +175,28 @@ const SampleList = () => {
     { label: "Added at", key: "added_at" },
     { label: "Last Taken By", key: "last_taken_by" },
     { label: "Released", key: "released" },
-    { label: "Actions" }
+    { label: "Actions" },
   ];
 
   const searchSampleData = async () => {
     setLoading(true);
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?search=${searchTerm}`);
-    const samples = res?.data?.samples;
-  
-    if (samples?.length > 0) {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?search=${searchTerm}`);
+      const samples = res?.data?.samples;
       setSamples(samples);
-      setDropdownOptions(extractDropdownOptions(samples)); // ✅ ADD THIS LINE
-      setLoading(false);
-    } else {
-      toast.info("No matching samples found!!!");
-      setSamples([]); // Optional: Clear samples if not found
-      setDropdownOptions(extractDropdownOptions([])); // ✅ Reset options
+      setDropdownOptions(extractDropdownOptions(samples || []));
+      if (!samples?.length) toast.info("No matching samples found!!!");
+    } catch {
+      toast.error("Search failed");
+    } finally {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="max-w-10/12 mx-auto">
-      {(funcLoading || loading ) && <Loader />}
+      {(funcLoading || loading) && <Loader />}
+
       <div className="flex gap-2 justify-between items-center mb-4">
         <input
           type="text"
@@ -284,11 +205,14 @@ const SampleList = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button onClick={searchSampleData} className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs cursor-pointer" >Search Database</button>
-        <button className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs mt-1 cursor-pointer" onClick={clearAllFilters}>Clear filters</button>
+        <button onClick={searchSampleData} className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs cursor-pointer">
+          Search Database
+        </button>
+        <button className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs mt-1 cursor-pointer" onClick={clearAllFilters}>
+          Clear filters
+        </button>
       </div>
 
-      {/* Table render */}
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -296,43 +220,45 @@ const SampleList = () => {
               <th key={idx} className="border p-2">
                 <div className="flex flex-col">
                   <span>{label}</span>
-                  {key && dropdownOptions[key] ? (
+                  {key && dropdownOptions[key] && (
                     <select
-                      name={key}
-                      value={filters[key] || ""}
-                      onChange={handleFilterChange}
-                      className="mt-1 border rounded text-xs p-1"
-                    >
-                      {dropdownOptions[key].map((option, i) => (
-                        <option key={i} value={option}>
-                          {option || "All"}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
+                    name={key}
+                    value={filters[key] || "All"}  // Default to "All"
+                    onChange={handleFilterChange}
+                    className="mt-1 text-xs border rounded"
+                  >
+                    {dropdownOptions[key].map((option, i) => (
+                      <option key={i} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  
+                  )}
                 </div>
               </th>
             ))}
           </tr>
         </thead>
-
         <tbody>
-          {filteredSamples.map((sample, index) => (
-            <SampleListRow
-            key={sample._id}
-            sample={sample}
-            index={index}
-            handleDelete={handleDelete}
-            handleTake={handleTake}
-          />
-          
-          ))}
+          {filteredSamples?.length > 0 ? (
+            filteredSamples.map((sample, idx) => (
+              <SampleListRow
+                key={sample._id}
+                sample={sample}
+                index={idx + 1}
+                userRole={userInfo?.role}
+                handleDelete={handleDelete}
+                handleTake={handleTake}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={tableHeadings.length} className="text-center p-4">
+                No samples found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
-
-      {/* Scroll-trigger loader sentinel */}
-      {loadingMore && <Loader />}
-      <div ref={loaderRef} className="h-10"></div>
     </div>
   );
 };

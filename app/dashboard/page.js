@@ -1,15 +1,33 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ShoppingCart, Heart, PackageCheck, Eye } from "lucide-react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const Dashboard = () => {
+  const [samples, setSamples] = useState([]);
+
+    useEffect(() => {
+      fetchSamples();
+    }, []);
+
+    const fetchSamples = async () => {
+      try {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
+        setSamples(res?.data?.samples);
+      } catch (err) {
+        toast.error("Failed to fetch samples");
+      }
+    };
+  
+  
   // You can replace these numbers with real data later
   const stats = [
     {
       title: "Total Samples",
       icon: <PackageCheck className="h-6 w-6 text-blue-600" />,
-      value: 125,
+      value: samples?.length,
     },
     {
       title: "Samples Taken",

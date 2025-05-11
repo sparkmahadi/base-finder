@@ -6,6 +6,7 @@ import ReactDOM from "react-dom";
 import { useRouter } from "next/navigation";
 
 const SampleListRow = ({
+  userRole,
   sample,
   index,
   handleTake,
@@ -19,7 +20,7 @@ const SampleListRow = ({
     if ((name === "taken" || name === "added_at" || name.includes("date")) && value) {
       try {
         const date = new Date(value);
-        return format(date, "MM-dd-yyyy HH:mm");
+        return format(date, "PP");
       } catch (err) {
         return value;
       }
@@ -46,28 +47,36 @@ const SampleListRow = ({
         <td className="py-2 px-4 border-b">{renderCell("sample_date", sample.sample_date)}</td>
         <td className="py-2 px-4 border-b">{renderCell("category", sample.category)}</td>
         <td className="py-2 px-4 border-b">{renderCell("style", sample.style)}</td>
-        <td className="py-2 px-4 border-b">{renderCell("no_of_sample", sample.no_of_sample)}</td>
+        <td className="py-2 px-4 border-b">{renderCell("buyer", sample.buyer)}</td>
         <td className="py-2 px-4 border-b">{renderCell("shelf", sample.shelf)}</td>
         <td className="py-2 px-4 border-b">{renderCell("division", sample.division)}</td>
         <td className="py-2 px-4 border-b">{renderCell("position", sample.position)}</td>
-        <td className="py-2 px-4 border-b">{renderCell("availability", sample.availability === "no" ? "Taken /Not Available" : "Yes")}</td>
+        <td className="py-2 px-4 border-b">{renderCell("availability", sample.availability === "no" ? "Taken/Not Available" : "Yes")}</td>
         <td className="py-2 px-4 border-b">{renderCell("added_at", sample.added_at)}</td>
         <td className="py-2 px-4 border-b">{renderCell("last_taken_by", sample.last_taken_by)}</td>
         <td className="py-2 px-4 border-b">{renderCell("released", sample.released ? sample.released : "-")}</td>
         <td className="py-2 px-4 border-b space-y-1">
           <div className="flex gap-2">
-            <button
-              onClick={openModal}
-              className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
-            >
-              Take
-            </button>
-            <button
-              onClick={() => handleDelete(sample._id)}
-              className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
-            >
-              Delete
-            </button>
+            {
+              sample?.availability === "no" ?
+                null
+                :
+                <button
+                  onClick={openModal}
+                  className="bg-green-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
+                >
+                  Take
+                </button>
+            }
+            {
+              userRole === "admin" &&
+              <button
+                onClick={() => handleDelete(sample._id)}
+                className="bg-red-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"
+              >
+                Delete
+              </button>
+            }
             <button
               onClick={() => router.push(`/samples/${sample._id}`)}
               className="bg-blue-600 text-white px-2 py-1 rounded w-full text-xs mt-1 cursor-pointer"

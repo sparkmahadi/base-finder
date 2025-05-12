@@ -119,8 +119,8 @@ const SampleList = () => {
         setRefetch((prev) => !prev);
         toast.success(res?.data?.message);
       }
-    } catch {
-      toast.error("Failed to take sample");
+    } catch(err) {
+      toast.error("Failed to take sample", err.message);
     }
   };
 
@@ -192,6 +192,11 @@ const SampleList = () => {
       setLoading(false);
     }
   };
+
+if (!userInfo || !isAuthenticated) {
+  return <Loader />; // or any fallback UI while loading user info
+}
+
 
   return (
     <div className="max-w-10/12 mx-auto">

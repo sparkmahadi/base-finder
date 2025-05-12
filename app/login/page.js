@@ -32,7 +32,8 @@ export default function LoginPage() {
       );
 
       localStorage.setItem("token", res.data.token);
-      login();
+await login(); // make sure it's awaited so userInfo is ready
+
 
       toast.update(toastId, {
         render: `Welcome back, ${res.data.username}!`,

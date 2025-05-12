@@ -244,7 +244,7 @@ const SampleList = () => {
               <SampleListRow
                 key={sample._id}
                 sample={sample}
-                index={idx + 1}
+                index={idx}
                 userRole={userInfo?.role}
                 handleDelete={handleDelete}
                 handleTake={handleTake}

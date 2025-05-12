@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/app/context/AuthContext';
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 import * as XLSX from 'xlsx';
 
 export default function UploadExcel() {
@@ -101,7 +102,11 @@ export default function UploadExcel() {
       console.log(selected);
 
       const data = await res.json();
-      alert(data.message);
+      if(data?.success){
+        toast.success(data?.message);
+      } else{
+        toast.error("Something wrong happened")
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to upload samples.');

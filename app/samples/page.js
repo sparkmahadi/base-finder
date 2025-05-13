@@ -16,52 +16,49 @@ const SampleList = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
-    date: "All",
+    sample_date: "All",
+    buyer: "All",
     category: "All",
     style: "All",
-    buyer: "All",
     shelf: "All",
     division: "All",
     position: "All",
     availability: "All",
-    added_at: "All",
-    last_taken_by: "All",
-    released: "All",
+    status: "All",
+    added_by: "All",
   });
-  
+
 
   const [dropdownOptions, setDropdownOptions] = useState({
-    category: [""],
+    sample_date: [""],
     buyer: [""],
+    category: [""],
+    style: [""],
     shelf: [""],
     division: [""],
     position: [""],
     availability: [""],
-    released: [""],
-    style: [""],
-    date: [""],
-    added_at: [""],
-    last_taken_by: [""],
+    status: [""],
+    added_by: [""],
   });
 
   const extractDropdownOptions = (samplesData) => {
     const getUnique = (key) => ["All", ...Array.from(new Set(samplesData.map((s) => s[key]).filter(Boolean)))];
-  
+
     return {
-      category: getUnique("category"),
+      sample_date: getUnique("sample_date"),
       buyer: getUnique("buyer"),
+      category: getUnique("category"),
+      style: getUnique("style"),
       shelf: getUnique("shelf"),
       division: getUnique("division"),
       position: getUnique("position"),
       availability: getUnique("availability"),
+      status: getUnique("status"),
       added_by: getUnique("added_by"),
-      released: getUnique("released"),
-      style: getUnique("style"),
-      date: getUnique("date"),
-      added_at: getUnique("added_at"),
-      last_taken_by: getUnique("last_taken_by"),
     };
   };
+
   
 
   useEffect(() => {
@@ -119,7 +116,7 @@ const SampleList = () => {
         setRefetch((prev) => !prev);
         toast.success(res?.data?.message);
       }
-    } catch(err) {
+    } catch (err) {
       toast.error("Failed to take sample", err.message);
     }
   };
@@ -132,17 +129,16 @@ const SampleList = () => {
   const clearAllFilters = () => {
     setSearchTerm("");
     setFilters({
-      date: "",
+      sample_date: "",
+      buyer: "",
       category: "",
       style: "",
-      buyer: "",
       shelf: "",
       division: "",
       position: "",
       availability: "",
-      added_at: "",
-      last_taken_by: "",
-      released: "",
+      status: "",
+      added_by: "",
     });
   };
 
@@ -151,30 +147,29 @@ const SampleList = () => {
       sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
-  
+
     const matchesFilters = Object.entries(filters).every(([key, value]) => {
       // Skip filtering if the value is "All" or empty
       if (!value.trim() || value === "All") return true;
       return sample[key]?.toString().toLowerCase().includes(value.toLowerCase());
     });
-  
+
     return matchesSearch && matchesFilters;
   });
-  
+
 
   const tableHeadings = [
     { label: "SL" },
-    { label: "Date", key: "date" },
+    { label: "Sample Date", key: "sample_date" },
+    { label: "Buyer", key: "buyer" },
     { label: "Category", key: "category" },
     { label: "Style", key: "style" },
-    { label: "Buyer", key: "buyer" },
     { label: "Shelf", key: "shelf" },
     { label: "Division", key: "division" },
     { label: "Position", key: "position" },
     { label: "Availability", key: "availability" },
-    { label: "Added at", key: "added_at" },
-    { label: "Last Taken By", key: "last_taken_by" },
-    { label: "Released", key: "released" },
+    { label: "Status", key: "status" },
+    { label: "Added by", key: "added_by" },
     { label: "Actions" },
   ];
 
@@ -193,78 +188,92 @@ const SampleList = () => {
     }
   };
 
-if (!userInfo || !isAuthenticated) {
-  return <Loader />; // or any fallback UI while loading user info
-}
+  if (!userInfo || !isAuthenticated) {
+    return <Loader />; // or any fallback UI while loading user info
+  }
 
 
   return (
-    <div className="max-w-10/12 mx-auto">
-      {(funcLoading || loading) && <Loader />}
+   <div className="max-w-screen-2xl mx-auto p-4">
+  {(funcLoading || loading) && <Loader />}
 
-      <div className="flex gap-2 justify-between items-center mb-4">
-        <input
-          type="text"
-          placeholder="Search by style, category or added by"
-          className="border p-2 rounded-md w-6/12 mb-2 sm:mb-0"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <button onClick={searchSampleData} className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs cursor-pointer">
-          Search Database
-        </button>
-        <button className="bg-red-600 text-white px-2 py-1 w-1/12 rounded text-xs mt-1 cursor-pointer" onClick={clearAllFilters}>
-          Clear filters
-        </button>
-      </div>
+  {/* Search & Filter */}
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+    <input
+      type="text"
+      placeholder="Search by style, category or added by"
+      className="border p-2 rounded-md w-full md:w-1/2 text-sm"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={searchSampleData}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
+      >
+        Search
+      </button>
+      <button
+        onClick={clearAllFilters}
+        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            {tableHeadings.map(({ label, key }, idx) => (
-              <th key={idx} className="border p-2">
-                <div className="flex flex-col">
-                  <span>{label}</span>
-                  {key && dropdownOptions[key] && (
-                    <select
+  {/* Table */}
+  <div className="overflow-x-auto">
+    <table className="min-w-full border text-sm text-center whitespace-nowrap">
+      <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
+        <tr>
+          {tableHeadings.map(({ label, key }, idx) => (
+            <th key={idx} className="px-1 py-3 border-1">
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold truncate">{label}</span>
+                {key && dropdownOptions[key] && (
+                  <select
                     name={key}
-                    value={filters[key] || "All"}  // Default to "All"
+                    value={filters[key] || "All"}
                     onChange={handleFilterChange}
-                    className="mt-1 text-xs border rounded"
+                    className="text-xs border rounded px-1 py-0.5"
                   >
                     {dropdownOptions[key].map((option, i) => (
                       <option key={i} value={option}>{option}</option>
                     ))}
                   </select>
-                  
-                  )}
-                </div>
-              </th>
-            ))}
+                )}
+              </div>
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {filteredSamples?.length > 0 ? (
+          filteredSamples.map((sample, idx) => (
+            <SampleListRow
+              key={sample._id}
+              sample={sample}
+              index={idx}
+              userRole={userInfo?.role}
+              handleDelete={handleDelete}
+              handleTake={handleTake}
+            />
+          ))
+        ) : (
+          <tr>
+            <td colSpan={tableHeadings.length} className="text-center p-4 text-gray-500">
+              No samples found.
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {filteredSamples?.length > 0 ? (
-            filteredSamples.map((sample, idx) => (
-              <SampleListRow
-                key={sample._id}
-                sample={sample}
-                index={idx}
-                userRole={userInfo?.role}
-                handleDelete={handleDelete}
-                handleTake={handleTake}
-              />
-            ))
-          ) : (
-            <tr>
-              <td colSpan={tableHeadings.length} className="text-center p-4">
-                No samples found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+
   );
 };
 

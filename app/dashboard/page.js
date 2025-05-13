@@ -1,51 +1,80 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Heart, PackageCheck, Eye } from "lucide-react";
+import { ShoppingCart, Heart, PackageCheck, Eye, PersonStanding } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Loader from "../components/Loader";
+import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
   const router = useRouter();
+    const {isAuthenticated, userInfo} = useAuth();
+  const [loading, setLoading] = useState(false);
   const [samples, setSamples] = useState([]);
   const [categories, setCategories] = useState([]);
   const [takenSamples, setTakenSamples] = useState([]);
+  const [users, setUsers] = useState([]);
 
-    useEffect(() => {
-      fetchSamples();
-      fetchTakenSamples();
-      fetchCategories();
-    }, []);
+  useEffect(() => {
+    setLoading(true);
+    fetchSamples();
+    fetchTakenSamples();
+    fetchCategories();
+    fetchUsers();
+    setLoading(false);
+  }, []);
 
-    const fetchSamples = async () => {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
-        setSamples(res?.data?.samples);
-      } catch (err) {
-        toast.error("Failed to fetch samples");
-      }
-    };
+  const fetchSamples = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
+      setSamples(res?.data?.samples);
+      setLoading(false);
+    } catch (err) {
+      toast.error("Failed to fetch samples");
+      setLoading(false);
+    }
+  };
 
-    const fetchTakenSamples = async () => {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
-        setTakenSamples(res?.data?.samples);
-      } catch (err) {
-        toast.error("Failed to fetch samples");
-      }
-    };
-    const fetchCategories = async () => {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories`);
-        console.log(res);
-        setCategories(res?.data);
-      } catch (err) {
-        toast.error("Failed to fetch samples");
-      }
-    };
-  
-  
+  const fetchTakenSamples = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
+      setTakenSamples(res?.data?.samples);
+      setLoading(false);
+    } catch (err) {
+      toast.error("Failed to fetch samples");
+      setLoading(false);
+    }
+  };
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories`);
+      console.log(res);
+      setCategories(res?.data);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      toast.error("Failed to fetch samples");
+    }
+  };
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`);
+      console.log(res);
+      setUsers(res?.data);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      toast.error("Failed to fetch samples");
+    }
+  };
+
+
   // You can replace these numbers with real data later
   const stats = [
     {
@@ -73,6 +102,18 @@ const Dashboard = () => {
       value: categories?.length,
     },
   ];
+  const adminStats = [
+    {
+      title: "Total Users",
+      icon: <PersonStanding className="h-6 w-6 text-purple-500" />,
+      link: '/dashboard/users',
+      value: users?.length,
+    },
+  ]
+
+  if (loading) {
+    return <Loader />
+  }
 
   return (
     <div className="p-6">
@@ -81,7 +122,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
           <div
-          onClick={()=>router.push(stat?.link)}
+            onClick={() => router.push(stat?.link)}
             key={index}
             className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition cursor-pointer"
           >
@@ -92,6 +133,23 @@ const Dashboard = () => {
             {stat.icon}
           </div>
         ))}
+        {
+          userInfo.role === "admin" &&
+          adminStats.map((stat, index) => (
+            <div
+              onClick={() => router.push(stat?.link)}
+              key={index}
+              className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition cursor-pointer"
+            >
+              <div>
+                <h2 className="text-gray-600 text-sm">{stat.title}</h2>
+                <p className="text-xl font-bold">{stat.value}</p>
+              </div>
+              {stat.icon}
+            </div>
+          ))
+        }
+
       </div>
     </div>
   );

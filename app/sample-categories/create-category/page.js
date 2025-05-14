@@ -1,31 +1,39 @@
 // components/CreateCategory.js
 "use client"
 import { createCategory } from '@/lib/categoryAPI';
+import { useRouter } from 'next/navigation';
 // components/CreateCategory.js
 
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 export default function CreateCategory() {
-  const [cat_id, setCatId] = useState('');
   const [cat_name, setCatName] = useState('');
+  const router = useRouter();
   const [buyer_name, setBuyerName] = useState('');
-  const [status, setStatus] = useState('');
-  const [totalSamples, setTotalSamples] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const category = { cat_id, cat_name, buyer_name, status, totalSamples };
+    const category = { cat_name, buyer_name, status:"active", totalSamples:0 };
 
     try {
-      const newCategory = await createCategory(category);
-      setSuccess('Category created successfully!');
+      const data = await createCategory(category);
+      if(data.redirect){
+        router.push("/sample-categories")
+      }
+      if(data.success){
+        setSuccess('Category created successfully!');
+      toast.success(data?.message)
       setError(null); // Clear previous errors
-      console.log('New category created:', newCategory);
+      console.log('New category created:', data);
+      } else {
+        toast.info(data.message);
+      }
     } catch (err) {
-      setError('Error creating category');
+      setError(err.message);
       setSuccess(null);
       console.error('Error creating category:', err);
     }
@@ -39,17 +47,6 @@ export default function CreateCategory() {
       {error && <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>}
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="cat_id" className="block text-sm font-medium text-gray-600">Category ID</label>
-          <input
-            id="cat_id"
-            type="text"
-            value={cat_id}
-            onChange={(e) => setCatId(e.target.value)}
-            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
         
         <div>
           <label htmlFor="cat_name" className="block text-sm font-medium text-gray-600">Category Name</label>
@@ -70,30 +67,6 @@ export default function CreateCategory() {
             type="text"
             value={buyer_name}
             onChange={(e) => setBuyerName(e.target.value)}
-            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-600">Status</label>
-          <input
-            id="status"
-            type="text"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="totalSamples" className="block text-sm font-medium text-gray-600">Total Samples</label>
-          <input
-            id="totalSamples"
-            type="number"
-            value={totalSamples}
-            onChange={(e) => setTotalSamples(e.target.value)}
             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />

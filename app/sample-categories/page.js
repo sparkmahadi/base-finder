@@ -86,14 +86,13 @@ export default function ListCategories() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-7xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Categories List</h2>
 
-      <div className="space-y-4">
+      <div className="space-y-4 grid grid-cols-5 gap-5">
         {categories?.map((category) => (
           <div key={category._id} className="p-4 bg-gray-100 rounded-md shadow-md">
             <h3 className="text-lg font-semibold text-gray-700">{category.cat_name}</h3>
-            <p className="text-gray-600">Category ID: {category.cat_id}</p>
             <p className="text-gray-600">Buyer: {category.buyer_name}</p>
             <p className="text-gray-600">Status: {category.status}</p>
             <p className="text-gray-600">Total Samples: {category.totalSamples}</p>
@@ -188,6 +187,7 @@ export default function ListCategories() {
           </form>
         </div>
       )}
+      
     </div>
   );
 }

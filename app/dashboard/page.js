@@ -109,6 +109,12 @@ const Dashboard = () => {
       link: '/dashboard/users',
       value: users?.length,
     },
+    {
+      title: "Unique Categories in Samples",
+      icon: <PersonStanding className="h-6 w-6 text-purple-500" />,
+      link: '/sample-categories/unique-categories',
+      value: users?.length,
+    },
   ]
 
   if (loading) {

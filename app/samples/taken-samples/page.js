@@ -5,10 +5,12 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
 import TakenSampleListRow from "./TakenSampleList";
+import Loader from "@/app/components/Loader";
 
 const TakenSamplesList = () => {
   const { isAuthenticated, userInfo } = useAuth();
   const [samples, setSamples] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [refetch, setRefetch] = useState(false);
 
   useEffect(() => {
@@ -19,8 +21,10 @@ const TakenSamplesList = () => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
       setSamples(res.data.samples);
+      setLoading(false);
     } catch (err) {
       toast.error("Failed to fetch samples");
+      setLoading(false);
     }
   };
 
@@ -51,6 +55,8 @@ const TakenSamplesList = () => {
   const tableHeadings = [
     "SL", "Date", "Category", "Style", "No. of sample", "Shelf", "Division", "Position", "Last Taken at", "Last Taken By", "Actions",
   ];
+
+  if(loading) return <Loader/>
 
   return (
     <div className="max-w-7xl mx-auto">

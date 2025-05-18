@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import ReactDOM from "react-dom";
+import { useRouter } from "next/navigation";
 
 const TakenSampleListRow = ({
   sample,
@@ -11,6 +12,7 @@ const TakenSampleListRow = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newPosition, setNewPosition] = useState("");
+  const router = useRouter();
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -20,7 +22,7 @@ const TakenSampleListRow = ({
       alert("Please enter the new position.");
       return;
     }
-    handlePutBack(sample._id, newPosition);
+    handlePutBack(sample?._id, newPosition);
     closeModal();
   };
   if (sample?.last_taken_at)
@@ -29,19 +31,19 @@ const TakenSampleListRow = ({
       <>
         <tr>
           <td className="py-2 px-4 border-b">{index + 1}</td>
-          <td className="py-2 px-4 border-b">{sample.sample_date ? format(new Date(sample.last_taken_at), 'PP') : "--"}</td>
-          <td className="py-2 px-4 border-b">{sample.category}</td>
-          <td className="py-2 px-4 border-b">{sample.style}</td>
-          <td className="py-2 px-4 border-b">{sample.no_of_sample}</td>
-          <td className="py-2 px-4 border-b">{sample.shelf}</td>
-          <td className="py-2 px-4 border-b">{sample.division}</td>
-          <td className="py-2 px-4 border-b">{sample.position}</td><td className="py-2 px-4 border-b">
-            {sample.last_taken_at
-              ? format(new Date(sample.last_taken_at), 'PPp')
+          <td className="py-2 px-4 border-b">{sample?.sample_date ? format(new Date(sample?.last_taken_at), 'PP') : "--"}</td>
+          <td className="py-2 px-4 border-b">{sample?.category}</td>
+          <td className="py-2 px-4 border-b">{sample?.style}</td>
+          <td className="py-2 px-4 border-b">{sample?.no_of_sample}</td>
+          <td className="py-2 px-4 border-b">{sample?.shelf}</td>
+          <td className="py-2 px-4 border-b">{sample?.division}</td>
+          <td className="py-2 px-4 border-b">{sample?.position}</td><td className="py-2 px-4 border-b">
+            {sample?.last_taken_at
+              ? format(new Date(sample?.last_taken_at), 'PPp')
               : '--'}
           </td>
           <td className="py-2 px-4 border-b">
-            {sample.last_taken_by || '--'}
+            {sample?.last_taken_by || '--'}
           </td>
           <td className="py-2 px-4 border-b">
             <button
@@ -49,6 +51,12 @@ const TakenSampleListRow = ({
               className="bg-yellow-500 text-white px-3 py-1 rounded text-sm cursor-pointer"
             >
               Put Back
+            </button>
+            <button
+              onClick={()=>router.push(`/samples/${sample?._id}`)}
+              className="bg-blue-500 text-white px-3 py-1 rounded text-sm cursor-pointer"
+            >
+              Details
             </button>
           </td>
         </tr>

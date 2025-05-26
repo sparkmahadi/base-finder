@@ -140,7 +140,7 @@ const Dashboard = () => {
           </div>
         ))}
         {
-          userInfo.role === "admin" &&
+          userInfo?.role === "admin" &&
           adminStats.map((stat, index) => (
             <div
               onClick={() => router.push(stat?.link)}

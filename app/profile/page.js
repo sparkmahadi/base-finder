@@ -27,7 +27,7 @@ export default function Profile() {
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Profile</h2>
-      
+
       {/* Display user information */}
       <div className="mb-4">
         <h3 className="font-medium text-lg">Username</h3>
@@ -47,6 +47,16 @@ export default function Profile() {
       <div className="mb-4">
         <h3 className="font-medium text-lg">Role</h3>
         <p>{userInfo?.role || "No role assigned"}</p>
+      </div>
+
+      <div className="mb-4">
+        <h3 className="font-medium text-lg">Approval</h3>
+        <p>{userInfo?.approval ? "Approved" : "Not Approved"}</p>
+      </div>
+
+      <div className="mb-4">
+        <h3 className="font-medium text-lg">Verificaiton</h3>
+        <p>{userInfo?.verified ? "Verified" : "Not Verified"}</p>
       </div>
 
       {/* Profile Image (optional) */}

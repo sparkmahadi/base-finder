@@ -142,7 +142,8 @@ const SampleList = () => {
     });
   };
 
-  const filteredSamples = samples?.filter((sample) => {
+const filteredSamples = samples
+  ?.filter((sample) => {
     const matchesSearch =
       sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -155,6 +156,18 @@ const SampleList = () => {
     });
 
     return matchesSearch && matchesFilters;
+  })
+  .sort((a, b) => {
+    // Sort by shelf
+    if (a.shelf !== b.shelf) {
+      return a.shelf - b.shelf;
+    }
+    // If shelf is the same, sort by division
+    if (a.division !== b.division) {
+      return a.division - b.division;
+    }
+    // If division is also the same, sort by position
+    return a.position - b.position;
   });
 
 

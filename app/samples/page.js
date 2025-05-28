@@ -1,3 +1,4 @@
+// components/SampleList.jsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -28,38 +29,49 @@ const SampleList = () => {
     added_by: "All",
   });
 
-
   const [dropdownOptions, setDropdownOptions] = useState({
-    sample_date: [""],
-    buyer: [""],
-    category: [""],
-    style: [""],
-    shelf: [""],
-    division: [""],
-    position: [""],
-    availability: [""],
-    status: [""],
-    added_by: [""],
+    sample_date: ["All"],
+    buyer: ["All"],
+    category: ["All"],
+    style: ["All"],
+    shelf: ["All"],
+    division: ["All"],
+    position: ["All"],
+    availability: ["All"],
+    status: ["All"],
+    added_by: ["All"],
   });
 
+  // Ensure dropdown options are unique and sorted, handling case and trimming
   const extractDropdownOptions = (samplesData) => {
-    const getUnique = (key) => ["All", ...Array.from(new Set(samplesData.map((s) => s[key]).filter(Boolean)))];
+    const getUniqueAndSorted = (key, type = "string") => {
+      // Normalize values: trim whitespace and convert to lowercase for consistent uniqueness
+      let uniqueValues = Array.from(new Set(
+        samplesData.map((s) => (s[key] !== null && s[key] !== undefined ? String(s[key]).trim() : ''))
+          .filter(Boolean) // Remove empty strings
+      ));
+
+      if (type === "number") {
+        uniqueValues.sort((a, b) => parseFloat(a) - parseFloat(b));
+      } else {
+        uniqueValues.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      }
+      return ["All", ...uniqueValues];
+    };
 
     return {
-      sample_date: getUnique("sample_date"),
-      buyer: getUnique("buyer"),
-      category: getUnique("category"),
-      style: getUnique("style"),
-      shelf: getUnique("shelf"),
-      division: getUnique("division"),
-      position: getUnique("position"),
-      availability: getUnique("availability"),
-      status: getUnique("status"),
-      added_by: getUnique("added_by"),
+      sample_date: getUniqueAndSorted("sample_date"),
+      buyer: getUniqueAndSorted("buyer"),
+      category: getUniqueAndSorted("category"),
+      style: getUniqueAndSorted("style"),
+      shelf: getUniqueAndSorted("shelf", "number"),
+      division: getUniqueAndSorted("division", "number"),
+      position: getUniqueAndSorted("position", "number"),
+      availability: getUniqueAndSorted("availability"),
+      status: getUniqueAndSorted("status"),
+      added_by: getUniqueAndSorted("added_by"),
     };
   };
-
-  
 
   useEffect(() => {
     fetchSamples();
@@ -67,7 +79,7 @@ const SampleList = () => {
 
   const fetchSamples = async () => {
     try {
-      setFuncLoading(true);
+      setLoading(true);
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
       const data = res.data.samples || [];
       setSamples(data);
@@ -75,36 +87,33 @@ const SampleList = () => {
     } catch {
       toast.error("Failed to fetch samples");
     } finally {
-      setFuncLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(`Are you sure to delete sample no. ${id}?`);
-    if (!confirmDelete) return toast.info("Cancelled command");
-
     setFuncLoading(true);
     try {
       const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res?.data?.success) {
-        setSamples((prev) => prev.filter((s) => s._id !== id));
         setRefetch((prev) => !prev);
         toast.success("Sample deleted successfully");
       }
-    } catch {
-      toast.error("Failed to delete sample");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete sample");
     } finally {
       setFuncLoading(false);
     }
   };
 
   const handleTake = async (id, purpose) => {
+    setFuncLoading(true);
     const body = {
       taken_by: userInfo?.username,
       purpose,
-      taken: new Date().toISOString(),
+      taken_at: new Date().toISOString(),
     };
 
     try {
@@ -112,14 +121,38 @@ const SampleList = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res?.data?.success) {
-        setSamples((prev) => prev.filter((s) => s._id !== id));
         setRefetch((prev) => !prev);
         toast.success(res?.data?.message);
       }
     } catch (err) {
-      toast.error("Failed to take sample", err.message);
+      toast.error(err.response?.data?.message || "Failed to take sample");
+    } finally {
+      setFuncLoading(false);
     }
   };
+
+    const handlePutBack = async (sampleId, newPosition) => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+          method: "PUT",
+          body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success(data?.message);
+          setRefetch((prev) => !prev);
+        } else {
+          const errorMessage = data.message || "Failed to put back sample.";
+          toast.error("Error: " + errorMessage);
+          console.error("Put back error:", data);
+        }
+      } catch (err) {
+        console.error("Put back API call failed:", err);
+        toast.error("An unexpected error occurred while putting back the sample.");
+      }
+    };
+  
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -129,47 +162,43 @@ const SampleList = () => {
   const clearAllFilters = () => {
     setSearchTerm("");
     setFilters({
-      sample_date: "",
-      buyer: "",
-      category: "",
-      style: "",
-      shelf: "",
-      division: "",
-      position: "",
-      availability: "",
-      status: "",
-      added_by: "",
+      sample_date: "All",
+      buyer: "All",
+      category: "All",
+      style: "All",
+      shelf: "All",
+      division: "All",
+      position: "All",
+      availability: "All",
+      status: "All",
+      added_by: "All",
     });
+    setRefetch((prev) => !prev);
   };
 
-const filteredSamples = samples
-  ?.filter((sample) => {
-    const matchesSearch =
-      sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredSamples = samples
+    ?.filter((sample) => {
+      const matchesSearch =
+        sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesFilters = Object.entries(filters).every(([key, value]) => {
-      // Skip filtering if the value is "All" or empty
-      if (!value.trim() || value === "All") return true;
-      return sample[key]?.toString().toLowerCase().includes(value.toLowerCase());
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (value === "All" || !value.trim()) return true;
+        return String(sample[key]).toLowerCase().includes(value.toLowerCase());
+      });
+
+      return matchesSearch && matchesFilters;
+    })
+    .sort((a, b) => {
+      if (a.shelf !== b.shelf) {
+        return parseFloat(a.shelf) - parseFloat(b.shelf);
+      }
+      if (a.division !== b.division) {
+        return parseFloat(a.division) - parseFloat(b.division);
+      }
+      return parseFloat(a.position) - parseFloat(b.position);
     });
-
-    return matchesSearch && matchesFilters;
-  })
-  .sort((a, b) => {
-    // Sort by shelf
-    if (a.shelf !== b.shelf) {
-      return a.shelf - b.shelf;
-    }
-    // If shelf is the same, sort by division
-    if (a.division !== b.division) {
-      return a.division - b.division;
-    }
-    // If division is also the same, sort by position
-    return a.position - b.position;
-  });
-
 
   const tableHeadings = [
     { label: "SL" },
@@ -186,107 +215,117 @@ const filteredSamples = samples
     { label: "Actions" },
   ];
 
-  const searchSampleData = async () => {
+  const handleSearchClick = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples?search=${searchTerm}`);
-      const samples = res?.data?.samples;
-      setSamples(samples);
-      setDropdownOptions(extractDropdownOptions(samples || []));
-      if (!samples?.length) toast.info("No matching samples found!!!");
-    } catch {
-      toast.error("Search failed");
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`, {
+        params: { search: searchTerm },
+      });
+      const data = res.data.samples || [];
+      setSamples(data);
+      setDropdownOptions(extractDropdownOptions(data));
+      if (!data.length && searchTerm) {
+        toast.info("No matching samples found for your search term.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Search failed");
     } finally {
       setLoading(false);
     }
   };
 
   if (!userInfo || !isAuthenticated) {
-    return <Loader />; // or any fallback UI while loading user info
+    return <Loader />;
   }
 
-
   return (
-   <div className="max-w-screen-2xl mx-auto p-4">
-  {(funcLoading || loading) && <Loader />}
+    <div className="max-w-screen-2xl mx-auto p-4 relative">
+      {(funcLoading || loading) && <Loader />}
 
-  {/* Search & Filter */}
-  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-    <input
-      type="text"
-      placeholder="Search by style, category or added by"
-      className="border p-2 rounded-md w-full md:w-1/2 text-sm"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-    <div className="flex flex-wrap gap-2">
-      <button
-        onClick={searchSampleData}
-        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-      >
-        Search
-      </button>
-      <button
-        onClick={clearAllFilters}
-        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm"
-      >
-        Clear
-      </button>
+      {/* Search & Action Buttons */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <input
+          type="text"
+          placeholder="Search by style, category, or added by..."
+          className="border border-gray-300 p-2.5 rounded-md w-full md:flex-1 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") handleSearchClick();
+          }}
+          aria-label="Search samples"
+        />
+        <div className="flex gap-3 w-full md:w-auto justify-end">
+          <button
+            onClick={handleSearchClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-md text-base transition-colors duration-200 shadow-sm hover:shadow-md flex-grow md:flex-grow-0"
+            disabled={loading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
+          <button
+            onClick={clearAllFilters}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-5 py-2.5 rounded-md text-base transition-colors duration-200 shadow-sm hover:shadow-md flex-grow md:flex-grow-0"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Table with integrated filters */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow-md">
+        <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
+          <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
+            <tr>
+              {tableHeadings.map(({ label, key }, idx) => (
+                <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold">
+                  <div className="flex flex-col gap-1 items-center justify-center">
+                    <span className="font-semibold truncate">{label}</span>
+                    {key && dropdownOptions[key] && (
+                      <select
+                        name={key}
+                        value={filters[key]}
+                        onChange={handleFilterChange}
+                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-300 bg-white"
+                        aria-label={`Filter by ${label}`}
+                      >
+                        {dropdownOptions[key].map((option, i) => (
+                          <option key={i} value={option}>
+                            {option === null || option === "" ? "N/A" : option}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredSamples?.length > 0 ? (
+              filteredSamples.map((sample, idx) => (
+                <SampleListRow
+                  key={sample._id}
+                  sample={sample}
+                  index={idx}
+                  userRole={userInfo?.role}
+                  userInfo={userInfo}
+                  handleDelete={handleDelete}
+                  handleTake={handleTake}
+                  handlePutBack={handlePutBack}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={tableHeadings.length} className="text-center p-6 text-gray-500 text-base">
+                  No samples found matching your criteria.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-
-  {/* Table */}
-  <div className="overflow-x-auto">
-    <table className="min-w-full border text-sm text-center whitespace-nowrap">
-      <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
-        <tr>
-          {tableHeadings.map(({ label, key }, idx) => (
-            <th key={idx} className="px-1 py-3 border-1">
-              <div className="flex flex-col gap-1">
-                <span className="font-semibold truncate">{label}</span>
-                {key && dropdownOptions[key] && (
-                  <select
-                    name={key}
-                    value={filters[key] || "All"}
-                    onChange={handleFilterChange}
-                    className="text-xs border rounded px-1 py-0.5"
-                  >
-                    {dropdownOptions[key].map((option, i) => (
-                      <option key={i} value={option}>{option}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {filteredSamples?.length > 0 ? (
-          filteredSamples.map((sample, idx) => (
-            <SampleListRow
-              key={sample._id}
-              sample={sample}
-              index={idx}
-              userRole={userInfo?.role}
-              handleDelete={handleDelete}
-              handleTake={handleTake}
-            />
-          ))
-        ) : (
-          <tr>
-            <td colSpan={tableHeadings.length} className="text-center p-4 text-gray-500">
-              No samples found.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-
-
   );
 };
 

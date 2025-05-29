@@ -336,7 +336,7 @@ export default function SampleDetails({ params }) {
                                 onChange={() => setShiftPreference('none')}
                               />
                               <span className="ml-2 text-gray-800">
-                                No shifting (Only update this sample's position, may cause duplicates)
+                                No shifting (Only update this sample&apos;s position, may cause duplicates)
                               </span>
                             </label>
                             <label className="flex items-center mb-1">

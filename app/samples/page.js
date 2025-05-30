@@ -81,6 +81,7 @@ const SampleList = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
+      console.log(res);
       const data = res.data.samples || [];
       setSamples(data);
       setDropdownOptions(extractDropdownOptions(data));
@@ -277,20 +278,20 @@ const SampleList = () => {
         <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
           <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
             <tr>
-              {tableHeadings.map(({ label, key }, idx) => (
-                <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold">
-                  <div className="flex flex-col gap-1 items-center justify-center">
+              {tableHeadings?.map(({ label, key }, idx) => (
+                <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
+                  <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
                     <span className="font-semibold truncate">{label}</span>
                     {key && dropdownOptions[key] && (
                       <select
                         name={key}
                         value={filters[key]}
                         onChange={handleFilterChange}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-300 bg-white"
+                        className="text-xs max-w-32 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring focus:ring-blue-300 bg-white"
                         aria-label={`Filter by ${label}`}
                       >
                         {dropdownOptions[key].map((option, i) => (
-                          <option key={i} value={option}>
+                          <option className="max-w-32" key={i} value={option}>
                             {option === null || option === "" ? "N/A" : option}
                           </option>
                         ))}

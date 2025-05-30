@@ -33,7 +33,7 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, hand
   };
 
   const renderTd = (name, value, extra = "") => (
-    <td className={`py-3 px-3 border border-gray-200 text-sm break-words ${extra}`} title={value}>
+    <td className={`py-3 px-3 border border-gray-200 text-sm break-words ${extra} max-w-20`} title={value}>
       {renderCell(name, value)}
     </td>
   );

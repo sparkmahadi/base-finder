@@ -2,6 +2,7 @@
 
 import API from "@/lib/api";
 import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const AuthContext = createContext();
 
@@ -45,7 +46,8 @@ const login = async () => {
       setUserInfo(response.data); // Store user info in state
       setLoading(false); // Set loading to false once user info is fetched
     } catch (error) {
-      console.error("Failed to retrieve user info", error);
+      toast.error("User is not found. Please logout and login again!!!");
+      toast.error(error?.message);
       setUserInfo(null); // Reset user info if error occurs
       setLoading(false); // Set loading to false even on error
     }

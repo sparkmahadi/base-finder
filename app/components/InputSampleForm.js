@@ -356,8 +356,33 @@ const InputSampleForm = () => {
     toast.info("All selections have been reset.");
   }, [initialFormData]);
 
+  // position increaser handler
+  const handleIncreasePositions = async (shelf, division, currentPosition) => {
+    setLoading(true);
+    console.log(shelf, division);
+    const body = { shelf: parseInt(shelf), division: parseInt(division), currentPosition: parseInt(currentPosition) }
+    try {
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/increase-positions-by-shelf-division`, body);
+      console.log(res);
+      const data = res?.data;
+      if (data?.modifiedCount > 0) {
+        toast.success(data?.message);
+        toast.success(`Total positions modified- ${data?.modifiedCount}`);
+        return true;
+      } else {
+        toast.error("Data cannot be modified or no data available!!!")
+        return false;
+      }
+    } catch (err) {
+      toast.error("Failed to fetch sample details.");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // --- Submission Handler ---
-  const handleSubmit = useCallback(async (e) => {
+const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -368,70 +393,81 @@ const InputSampleForm = () => {
       if (showCustomStatusInput && !formData.status.trim()) { toast.error("Please enter a custom status."); setLoading(false); return; }
       if (showCustomShelfInput && (!formData.shelf || isNaN(parseInt(formData.shelf)))) { toast.error("Please enter a valid custom shelf number."); setLoading(false); return; }
       if (showCustomDivisionInput && (!formData.division || isNaN(parseInt(formData.division)))) { toast.error("Please enter a valid custom division number."); setLoading(false); return; }
+      if ((!formData.position || isNaN(parseInt(formData.position)))) { toast.error("Please enter a valid position number."); setLoading(false); return; }
       if (!formData.sample_date) { toast.error("Please select a sample date."); setLoading(false); return; }
 
-      // --- Pre-submission: Add new utilities if needed ---
-      // These calls should run even if the item already exists on the backend,
-      // the backend should handle uniqueness.
-      if (showCustomCategoryInput && formData.category.trim()) {
-        await apiCreateCategory(formData.category.trim());
-        toast.success(`New Category "${formData.category}" added.`);
-      }
-      if (showCustomBuyerInput && formData.buyer.trim()) {
-        await apiCreateBuyer(formData.buyer.trim());
-        toast.success(`New Buyer "${formData.buyer}" added.`);
-      }
-      if (showCustomStatusInput && formData.status.trim()) {
-        await apiCreateStatus(formData.status.trim());
-        toast.success(`New Status "${formData.status}" added.`);
-      }
-      if (showCustomShelfInput && formData.shelf) {
-        await apiCreateShelf(parseInt(formData.shelf));
-        toast.success(`New Shelf "${formData.shelf}" added.`);
-      }
-      if (showCustomDivisionInput && formData.division) {
-        await apiCreateDivision(parseInt(formData.division));
-        toast.success(`New Division "${formData.division}" added.`);
-      }
+      // check the position number by shelf and division and shift samples down greater than that
+      const samplesShift = await handleIncreasePositions(formData.shelf, formData.division, (parseInt(formData.position)-1));
 
-      // After adding new utilities, refresh options for next entry (optional but good UX)
-      if (showCustomCategoryInput || showCustomBuyerInput || showCustomStatusInput) { // Shelf/Division aren't dynamic dropdowns yet
-        await refetchAllOptions();
-      }
+      // Continue only if samplesShift is true (meaning positions were successfully shifted or no shift was needed)
+      if (samplesShift) {
+        // --- Pre-submission: Add new utilities if needed ---
+        // These calls should run even if the item already exists on the backend,
+        // the backend should handle uniqueness.
+        if (showCustomCategoryInput && formData.category.trim()) {
+          await apiCreateCategory(formData.category.trim());
+          toast.success(`New Category "${formData.category}" added.`);
+        }
+        if (showCustomBuyerInput && formData.buyer.trim()) {
+          await apiCreateBuyer(formData.buyer.trim());
+          toast.success(`New Buyer "${formData.buyer}" added.`);
+        }
+        if (showCustomStatusInput && formData.status.trim()) {
+          await apiCreateStatus(formData.status.trim());
+          toast.success(`New Status "${formData.status}" added.`);
+        }
+        if (showCustomShelfInput && formData.shelf) {
+          await apiCreateShelf(parseInt(formData.shelf));
+          toast.success(`New Shelf "${formData.shelf}" added.`);
+        }
+        if (showCustomDivisionInput && formData.division) {
+          await apiCreateDivision(parseInt(formData.division));
+          toast.success(`New Division "${formData.division}" added.`);
+        }
 
+        // After adding new utilities, refresh options for next entry (optional but good UX)
+        if (showCustomCategoryInput || showCustomBuyerInput || showCustomStatusInput) { // Shelf/Division aren't dynamic dropdowns yet
+          await refetchAllOptions();
+        }
 
-      const payload = {
-        ...formData,
-        sample_date: formData.sample_date.toISOString().split('T')[0], // Format date for API
-        added_by: userInfo?.username,
-        added_at: new Date().toISOString(), // Ensure fresh added_at timestamp
-      };
-      console.log("Submitting formData:", payload);
+        const payload = {
+          ...formData,
+          sample_date: formData.sample_date.toISOString().split('T')[0], // Format date for API
+          added_by: userInfo?.username,
+          added_at: new Date().toISOString(), // Ensure fresh added_at timestamp
+        };
+        console.log("Submitting formData:", payload);
 
-      const res = await apiSubmitSample(payload);
+        const res = await apiSubmitSample(payload);
 
-      if (res.success) {
-        toast.success("Sample saved successfully! Ready for next entry.");
+        if (res.success) {
+          toast.success("Sample saved successfully! Ready for next entry.");
 
-        // Reset only Step 3 & 4 related fields, keep others
-        setFormData(prev => ({
-          ...prev,
-          style: "",
-          no_of_sample: "",
-          position: "",
-          comments: "",
-          released: "",
-          sample_date: new Date(), // Reset date to current for next entry
-          added_at: new Date().toISOString(), // Update added_at for next entry
-        }));
-        setSamplesInLocation([]); // Clear location samples as a new one is added
-        setShowCustomCategoryInput(false); // Hide custom input fields after submission
-        setShowCustomBuyerInput(false);
-        setShowCustomStatusInput(false);
-        setShowCustomShelfInput(false);
-        setShowCustomDivisionInput(false);
+          // Reset only Step 3 & 4 related fields, keep others
+          setFormData(prev => ({
+            ...prev,
+            style: "",
+            no_of_sample: "",
+            position: "",
+            comments: "",
+            released: "",
+            sample_date: new Date(), // Reset date to current for next entry
+            added_at: new Date().toISOString(), // Update added_at for next entry
+          }));
+          setSamplesInLocation([]); // Clear location samples as a new one is added
+          setShowCustomCategoryInput(false); // Hide custom input fields after submission
+          setShowCustomBuyerInput(false);
+          setShowCustomStatusInput(false);
+          setShowCustomShelfInput(false);
+          setShowCustomDivisionInput(false);
 
-        setCurrentStep(3); // Jump back to Step 3 for quick new entry with preserved selections
+          setCurrentStep(3); // Jump back to Step 3 for quick new entry with preserved selections
+        }
+      } else {
+        // If samplesShift is false, it means handleIncreasePositions indicated an issue
+        // The error message would have been shown by handleIncreasePositions, so we just return.
+        setLoading(false); // Ensure loading is off if we don't proceed
+        return;
       }
     } catch (err) {
       toast.error("Failed to save sample or add new utilities.");

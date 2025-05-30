@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Heart, PackageCheck, Eye, PersonStanding, UtilityPole } from "lucide-react";
+import { ShoppingCart, Heart, PackageCheck, Eye, PersonStanding, UtilityPole, PenToolIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -119,6 +119,12 @@ const Dashboard = () => {
       title: "Utilities",
       icon: <UtilityPole className="h-6 w-6 text-purple-500" />,
       link: '/sample-utilities/',
+      value: 'N/A',
+    },
+    {
+      title: "Tools",
+      icon: <PenToolIcon className="h-6 w-6 text-purple-500" />,
+      link: '/tools/',
       value: 'N/A',
     },
   ]

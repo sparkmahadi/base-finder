@@ -92,12 +92,33 @@ const SampleList = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  // const handleDelete = async (id) => {
+  //   setFuncLoading(true);
+  //   try {
+  //     const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
+  //       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  //     });
+  //     if (res?.data?.success) {
+  //       setRefetch((prev) => !prev);
+  //       toast.success("Sample deleted successfully");
+  //     }
+  //   } catch (err) {
+  //     toast.error(err.response?.data?.message || "Failed to delete sample");
+  //   } finally {
+  //     setFuncLoading(false);
+  //   }
+  // };
+
+
+  const handleDelete = async (id, reduceOtherPositions) => {
     setFuncLoading(true);
     try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}?reducePositions=${reduceOtherPositions}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       if (res?.data?.success) {
         setRefetch((prev) => !prev);
         toast.success("Sample deleted successfully");
@@ -132,28 +153,28 @@ const SampleList = () => {
     }
   };
 
-    const handlePutBack = async (sampleId, newPosition) => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
-          method: "PUT",
-          body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          toast.success(data?.message);
-          setRefetch((prev) => !prev);
-        } else {
-          const errorMessage = data.message || "Failed to put back sample.";
-          toast.error("Error: " + errorMessage);
-          console.error("Put back error:", data);
-        }
-      } catch (err) {
-        console.error("Put back API call failed:", err);
-        toast.error("An unexpected error occurred while putting back the sample.");
+  const handlePutBack = async (sampleId, newPosition) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+        method: "PUT",
+        body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data?.message);
+        setRefetch((prev) => !prev);
+      } else {
+        const errorMessage = data.message || "Failed to put back sample.";
+        toast.error("Error: " + errorMessage);
+        console.error("Put back error:", data);
       }
-    };
-  
+    } catch (err) {
+      console.error("Put back API call failed:", err);
+      toast.error("An unexpected error occurred while putting back the sample.");
+    }
+  };
+
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -236,7 +257,7 @@ const SampleList = () => {
   };
 
   if (!userInfo || !isAuthenticated) {
-    return <Loader />;
+    return <h2>System: You are not logged in properly. Please log out and log in again!!!</h2>;
   }
 
   return (

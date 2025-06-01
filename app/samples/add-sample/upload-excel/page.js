@@ -115,6 +115,10 @@ export default function UploadExcel() {
     }
   };
 
+    if (userInfo?.approval !== true) {
+    return <h2>System: Sorry, You are not approved to see this page yet!!! Contact Admin...</h2>;
+  }
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">Upload Samples from Excel</h2>

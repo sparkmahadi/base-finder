@@ -7,13 +7,17 @@ import { useRouter } from "next/navigation";
 import Modal from "./Modal"; // Changed import from TakingModal to the reusable Modal component
 import axios from "axios";
 import { toast } from "react-toastify";
+import DeletionModal from "./DeletionModal";
 
-const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, handlePutBack, userInfo }) => {
+const SampleListRow = ({ userRole, sample, index, handleTake, handlePutBack, userInfo }) => {
   const router = useRouter();
   const [isTakeModalOpen, setIsTakeModalOpen] = useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [sampleToDeleteId, setSampleToDeleteId] = useState(null);
+  const [reduceOtherPositions, setReduceOtherPositions] = useState(false);
 
   // State for Put Back Modal
   const [isPutBackModalOpen, setIsPutBackModalOpen] = useState(false);
@@ -44,8 +48,47 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, hand
     setPurpose(""); // Clear purpose on close
   };
 
-  const openDeleteConfirmModal = () => setIsDeleteConfirmModalOpen(true);
-  const closeDeleteConfirmModal = () => setIsDeleteConfirmModalOpen(false);
+  const openDeleteConfirmModal = () => {
+    setSampleToDeleteId(sample?._id);
+    setIsDeleteConfirmModalOpen(true);
+    setReduceOtherPositions(false); // Reset checkbox state when opening modal
+  };
+
+  const closeDeleteConfirmModal = () => {
+    setIsDeleteConfirmModalOpen(false);
+    setSampleToDeleteId(null);
+  };
+
+  // The single handleDelete function now takes the boolean directly
+  const handleDelete = async (reduceOtherPositions) => {
+    console.log(reduceOtherPositions);
+    if (!sampleToDeleteId) {
+      toast.error("No sample selected for deletion.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${sampleToDeleteId}?reducePositions=${reduceOtherPositions}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      console.log(res);
+      if (res?.data?.success) {
+        toast.success("Sample deleted successfully");
+        toast.success(res?.data?.message);
+        // setRefetch((prev) => !prev);
+      } else {
+        toast.error(res?.data?.message);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete sample : Frontend Error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleConfirmTake = () => {
     if (!purpose.trim()) {
@@ -54,11 +97,6 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, hand
     }
     handleTake(sample._id, purpose);
     closeTakeModal();
-  };
-
-  const handleConfirmDelete = () => {
-    handleDelete(sample._id);
-    closeDeleteConfirmModal();
   };
 
   // --- Put Back Modal Handlers ---
@@ -193,29 +231,17 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, hand
 
       {/* Delete Confirmation Modal (Now using the reusable 'Modal' component) */}
       {userRole === "admin" && (
-        <Modal // Changed from TakingModal to Modal
+        <DeletionModal
           isOpen={isDeleteConfirmModalOpen}
           onClose={closeDeleteConfirmModal}
           title="Confirm Deletion"
-          footer={
-            <>
-              <button
-                onClick={closeDeleteConfirmModal}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Delete
-              </button>
-            </>
-          }
+          // Pass distinct functions for Yes and No clicks
+          onConfirmYes={() => handleDelete('yes')}
+          onConfirmNo={() => handleDelete('no')}
+          showReducePositionsOption={true} // Keep this true to show the Yes/No prompt
         >
           <p className="text-gray-700">Are you sure you want to delete this sample? This action cannot be undone.</p>
-        </Modal>
+        </DeletionModal>
       )}
 
       {/* Put Back Sample Modal (Using the reusable Modal component) */}
@@ -232,7 +258,7 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handleDelete, hand
               Cancel
             </button>
             <button
-              onClick={()=>handleConfirmPutBack(sample?._id)}
+              onClick={() => handleConfirmPutBack(sample?._id)}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
             >
               Confirm Put Back

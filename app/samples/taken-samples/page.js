@@ -97,6 +97,7 @@ const TakenSamplesList = () => {
                   key={sample._id}
                   sample={sample}
                   index={index}
+                  userRole={userInfo?.role}
                   handlePutBack={handlePutBack}
                 />
               ))

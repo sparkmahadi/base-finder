@@ -36,6 +36,7 @@ export default function SampleDetails({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [refetchDivisionalSamples, setRefetchDivisionalSamples] = useState(false);
 
   // --- NEW STATE FOR SHIFTING PREFERENCE ---
   const [shiftPreference, setShiftPreference] = useState('none'); // 'none', 'makeSpace', 'adjustSequence'
@@ -55,39 +56,36 @@ export default function SampleDetails({ params }) {
 
 
   useEffect(() => {
+    console.log(currentSampleId);
     if (currentSampleId) {
       fetchSample(currentSampleId);
     } else {
       setSample(null);
       setLoading(false);
+      setError(null); // Clear any previous error
     }
   }, [currentSampleId, refetchTrigger]);
 
+  useEffect(() => {
+    if (showOtherSamplesInDivision && sample?.shelf && sample?.division && refetchDivisionalSamples) {
+      fetchSamplesInDivision(sample.shelf, sample.division);
+      setRefetchDivisionalSamples(false); // Reset trigger
+    }
+  }, [showOtherSamplesInDivision, sample?.shelf, sample?.division, refetchDivisionalSamples]);
+
   const fetchSample = async (idToFetch) => {
-    setLoading(true);
     try {
-      let res;
-      try {
-        res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${idToFetch}`);
-        console.log(res?.data);
-      } catch (mainError) {
-        if (mainError.response && mainError.response.status === 404) {
-          try {
-            res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken/${idToFetch}`);
-          } catch (takenError) {
-            console.error("Error fetching from taken samples:", takenError);
-            throw takenError;
-          }
-        } else {
-          throw mainError;
-        }
-      }
+      res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${idToFetch}`);
+      console.log(res);
       setSample(res?.data?.sample);
-    } catch (err) {
+      console.log('Fetched from regular samples:', res?.data);
+    } catch (error) {
+      console.error("Error fetching from regular samples:", error);
+      setError("Error fetching sample details.");
       toast.error("Failed to fetch sample details.");
-      setSample(null);
-    } finally {
-      setLoading(false);
+      setSample(null); // Clear sample on error
+    } finally{
+      setLoading(false)
     }
   };
 
@@ -245,6 +243,13 @@ export default function SampleDetails({ params }) {
     }
   };
 
+  if (error) {
+    return (<h3> Error message with retry/back button </h3>);
+  }
+
+  if (!sample) { // This condition is now reliably hit if not loading, no error, and sample is truly null
+    return (<h3> No sample data available </h3>);
+  }
 
   if (loading) return <Loader />;
 
@@ -389,462 +394,463 @@ export default function SampleDetails({ params }) {
       toast.error("Failed to fetch sample details.");
     } finally {
       setLoading(false);
-    }}
+    }
+  }
 
-    const tableHeadings = [
-      { label: "SL" },
-      { label: "Sample Date", key: "sample_date" },
-      { label: "Buyer", key: "buyer" },
-      { label: "Category", key: "category" },
-      { label: "Style", key: "style" },
-      { label: "Shelf", key: "shelf" },
-      { label: "Division", key: "division" },
-      { label: "Position", key: "position" },
-      { label: "Availability", key: "availability" },
-      { label: "Status", key: "status" },
-      { label: "Added by", key: "added_by" },
-      { label: "Actions" },
-    ];
+  const tableHeadings = [
+    { label: "SL" },
+    { label: "Sample Date", key: "sample_date" },
+    { label: "Buyer", key: "buyer" },
+    { label: "Category", key: "category" },
+    { label: "Style", key: "style" },
+    { label: "Shelf", key: "shelf" },
+    { label: "Division", key: "division" },
+    { label: "Position", key: "position" },
+    { label: "Availability", key: "availability" },
+    { label: "Status", key: "status" },
+    { label: "Added by", key: "added_by" },
+    { label: "Actions" },
+  ];
 
-    const handleDelete = async (id) => {
-      setLoading(true);
-      try {
-        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (res?.data?.success) {
-          setRefetch((prev) => !prev);
-          toast.success("Sample deleted successfully");
-        }
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Failed to delete sample");
-      } finally {
-        setLoading(false);
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (res?.data?.success) {
+        setRefetch((prev) => !prev);
+        toast.success("Sample deleted successfully");
       }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete sample");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTake = async (id, purpose) => {
+    setLoading(true);
+    const body = {
+      taken_by: userInfo?.username,
+      purpose,
+      taken_at: new Date().toISOString(),
     };
 
-    const handleTake = async (id, purpose) => {
-      setLoading(true);
-      const body = {
-        taken_by: userInfo?.username,
-        purpose,
-        taken_at: new Date().toISOString(),
-      };
-
-      try {
-        const res = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`, body, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (res?.data?.success) {
-          setRefetch((prev) => !prev);
-          toast.success(res?.data?.message);
-        }
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Failed to take sample");
-      } finally {
-        setLoading(false);
+    try {
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`, body, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (res?.data?.success) {
+        setRefetch((prev) => !prev);
+        toast.success(res?.data?.message);
       }
-    };
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to take sample");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handlePutBack = async (sampleId, newPosition) => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
-          method: "PUT",
-          body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          toast.success(data?.message);
-          setRefetch((prev) => !prev);
-        } else {
-          const errorMessage = data.message || "Failed to put back sample.";
-          toast.error("Error: " + errorMessage);
-          console.error("Put back error:", data);
-        }
-      } catch (err) {
-        console.error("Put back API call failed:", err);
-        toast.error("An unexpected error occurred while putting back the sample.");
+  const handlePutBack = async (sampleId, newPosition) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+        method: "PUT",
+        body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data?.message);
+        setRefetch((prev) => !prev);
+      } else {
+        const errorMessage = data.message || "Failed to put back sample.";
+        toast.error("Error: " + errorMessage);
+        console.error("Put back error:", data);
       }
-    };
+    } catch (err) {
+      console.error("Put back API call failed:", err);
+      toast.error("An unexpected error occurred while putting back the sample.");
+    }
+  };
 
-    return (
-      <div className='flex justify-center'>
-        {/* main division */}
-        <div className="p-8 max-w-5xl mx-auto bg-gray-50 min-h-screen">
-          <div className="bg-white shadow-xl rounded-lg p-8">
-            <h1 className="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-4">
-              Sample Details
-            </h1>
+  return (
+    <div className='flex justify-center'>
+      {/* main division */}
+      <div className="p-8 max-w-5xl mx-auto bg-gray-50 min-h-screen">
+        <div className="bg-white shadow-xl rounded-lg p-8">
+          <h1 className="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-4">
+            Sample Details
+          </h1>
 
-            {/* Editable Fields Section */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-700 mb-4">
-                {isEditing ? 'Edit Sample Information' : 'General Information'}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {editableFields.map((field) => (
-                  <div key={field.key} className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-600 mb-1 capitalize">
-                      {field.label}
-                    </label>
-                    {isEditing ? (
-                      field.type === 'textarea' ? (
-                        <textarea
+          {/* Editable Fields Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-700 mb-4">
+              {isEditing ? 'Edit Sample Information' : 'General Information'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              {editableFields.map((field) => (
+                <div key={field.key} className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1 capitalize">
+                    {field.label}
+                  </label>
+                  {isEditing ? (
+                    field.type === 'textarea' ? (
+                      <textarea
+                        name={field.key}
+                        value={editedSample[field.key] ?? ''}
+                        onChange={handleChange}
+                        className="border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                        rows="3"
+                      />
+                    ) : (
+                      <>
+                        <input
+                          type={field.type}
                           name={field.key}
                           value={editedSample[field.key] ?? ''}
                           onChange={handleChange}
                           className="border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                          rows="3"
                         />
-                      ) : (
-                        <>
-                          <input
-                            type={field.type}
-                            name={field.key}
-                            value={editedSample[field.key] ?? ''}
-                            onChange={handleChange}
-                            className="border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                          />
-                          {/* --- NEW: Shifting Options for Position Field --- */}
-                          {field.key === 'position' && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                              <p className="font-semibold text-gray-700 mb-2">How to adjust other samples?</p>
-                              <label className="flex items-center mb-1">
-                                <input
-                                  type="radio"
-                                  className="form-radio text-blue-600 h-4 w-4"
-                                  name="shiftOption"
-                                  value="none"
-                                  checked={shiftPreference === 'none'}
-                                  onChange={() => setShiftPreference('none')}
-                                />
-                                <span className="ml-2 text-gray-800">
-                                  No shifting (Only update this sample&apos;s position, may cause duplicates)
-                                </span>
-                              </label>
-                              <label className="flex items-center mb-1">
-                                <input
-                                  type="radio"
-                                  className="form-radio text-blue-600 h-4 w-4"
-                                  name="shiftOption"
-                                  value="makeSpace"
-                                  checked={shiftPreference === 'makeSpace'}
-                                  onChange={() => setShiftPreference('makeSpace')}
-                                />
-                                <span className="ml-2 text-gray-800">
-                                  Shift to make space (Push samples at or after new position down by 1)
-                                </span>
-                              </label>
-                              <label className="flex items-center">
-                                <input
-                                  type="radio"
-                                  className="form-radio text-blue-600 h-4 w-4"
-                                  name="shiftOption"
-                                  value="adjustSequence"
-                                  checked={shiftPreference === 'adjustSequence'}
-                                  onChange={() => setShiftPreference('adjustSequence')}
-                                />
-                                <span className="ml-2 text-gray-800">
-                                  Adjust sequence (Re-order samples between old and new positions)
-                                </span>
-                              </label>
-                            </div>
-                          )}
-                        </>
-                      )
-                    ) : (
-                      <p className="text-gray-800 font-semibold bg-gray-100 p-2 rounded-md">
-                        {field.isDate ? formatDate(sample?.[field.key]) : sample?.[field.key] ?? '-'}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action buttons (unchanged) */}
-            <div className="flex flex-wrap justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={() => handleSave(sample?._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleEdit}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
-                  >
-                    Edit Sample
-                  </button>
-                  {sample?.availability !== "no" ? (
-                    <button
-                      onClick={openTakeModal}
-                      className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                    >
-                      Take
-                    </button>
+                        {/* --- NEW: Shifting Options for Position Field --- */}
+                        {field.key === 'position' && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                            <p className="font-semibold text-gray-700 mb-2">How to adjust other samples?</p>
+                            <label className="flex items-center mb-1">
+                              <input
+                                type="radio"
+                                className="form-radio text-blue-600 h-4 w-4"
+                                name="shiftOption"
+                                value="none"
+                                checked={shiftPreference === 'none'}
+                                onChange={() => setShiftPreference('none')}
+                              />
+                              <span className="ml-2 text-gray-800">
+                                No shifting (Only update this sample&apos;s position, may cause duplicates)
+                              </span>
+                            </label>
+                            <label className="flex items-center mb-1">
+                              <input
+                                type="radio"
+                                className="form-radio text-blue-600 h-4 w-4"
+                                name="shiftOption"
+                                value="makeSpace"
+                                checked={shiftPreference === 'makeSpace'}
+                                onChange={() => setShiftPreference('makeSpace')}
+                              />
+                              <span className="ml-2 text-gray-800">
+                                Shift to make space (Push samples at or after new position down by 1)
+                              </span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="radio"
+                                className="form-radio text-blue-600 h-4 w-4"
+                                name="shiftOption"
+                                value="adjustSequence"
+                                checked={shiftPreference === 'adjustSequence'}
+                                onChange={() => setShiftPreference('adjustSequence')}
+                              />
+                              <span className="ml-2 text-gray-800">
+                                Adjust sequence (Re-order samples between old and new positions)
+                              </span>
+                            </label>
+                          </div>
+                        )}
+                      </>
+                    )
                   ) : (
-                    <button
-                      onClick={openPutBackModal}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                    >
-                      Put Back
-                    </button>
-                  )}
-                  {userInfo?.role === "admin" && (
-                    <>
-                      <button
-                        onClick={openDeleteConfirmModal}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => handleReducePositions(sample?.shelf, sample?.division, sample?.position)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                      >
-                        Reduce Positions
-                      </button>
-                      <button
-                        onClick={() => handleIncreasePositions(sample?.shelf, sample?.division, sample?.position)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                      >
-                        Increase Positions
-                      </button>
-                      <button
-                        onClick={() => handleShowOtherSamplesInDivision(sample?.shelf, sample?.division)}
-                        className="bg-sky-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                      >
-                        Show Full Division
-                      </button>
-                      <button
-                        onClick={() => handleNormalizeConsecutiveDivision(sample?.shelf, sample?.division)}
-                        className="bg-sky-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
-                      >
-                        Normalize Division
-                      </button>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Non-Editable Fields Section (unchanged) */}
-            <div className="mb-8 mt-8">
-              <h2 className="text-2xl font-bold text-gray-700 mb-4">
-                System Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {nonEditableFields.map((field) => (
-                  <div key={field.key} className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-600 mb-1 capitalize">
-                      {field.label}
-                    </label>
                     <p className="text-gray-800 font-semibold bg-gray-100 p-2 rounded-md">
                       {field.isDate ? formatDate(sample?.[field.key]) : sample?.[field.key] ?? '-'}
                     </p>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              ))}
             </div>
-
-            {/* Taken Logs (unchanged) */}
-            <h2 className="text-2xl font-bold text-gray-700 mt-10 mb-4 border-b pb-3">
-              Taken Logs
-            </h2>
-            {sample?.taken_logs && sample.taken_logs.length > 0 ? (
-              <ul className="space-y-3 pl-5 text-gray-700">
-                {sample.taken_logs.map((log, idx) => (
-                  <li key={idx} className="bg-gray-50 p-3 rounded-md shadow-sm">
-                    <span className="font-semibold">Taken By:</span>{' '}
-                    {log.taken_by ?? '-'},{' '}
-                    <span className="font-semibold">at:</span>{' '}
-                    {formatDate(log.taken_at)},{' '}
-                    <span className="font-semibold">Purpose:</span>{' '}
-                    {log.purpose || 'N/A'}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 italic">No taken logs available.</p>
-            )}
-
-            {/* Returned Logs (unchanged) */}
-            <h2 className="text-2xl font-bold text-gray-700 mt-10 mb-4 border-b pb-3">
-              Returned Logs
-            </h2>
-            {sample?.returned_log && sample.returned_log.length > 0 ? (
-              <ul className="space-y-3 pl-5 text-gray-700">
-                {sample.returned_log.map((log, idx) => (
-                  <li key={idx} className="bg-gray-50 p-3 rounded-md shadow-sm">
-                    <span className="font-semibold">Returned By:</span>{' '}
-                    {log.returned_by ?? '-'},{' '}
-                    <span className="font-semibold">at:</span>{' '}
-                    {formatDate(log.returned_at)},{' '}
-                    <span className="font-semibold">Returned Position:</span>{' '}
-                    {log.position || 'N/A'}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 italic">No returned logs available.</p>
-            )}
           </div>
-        </div>
 
-        {/* Side Division */}
-        {
-          showOtherSamplesInDivision &&
-          <div>
-            <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
-              <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
-                <tr>
-                  {tableHeadings?.map(({ label, key }, idx) => (
-                    <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
-                      <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
-                        <span className="font-semibold truncate">{label}</span>
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {divisionalSamples?.length > 0 ? (
-                  divisionalSamples.map((sample, idx) => (
-                    <SampleListRow
-                      key={sample._id}
-                      sample={sample}
-                      index={idx}
-                      userRole={userInfo?.role}
-                      userInfo={userInfo}
-                      handleDelete={handleDelete}
-                      handleTake={handleTake}
-                      handlePutBack={handlePutBack}
-                    />
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={tableHeadings.length} className="text-center p-6 text-gray-500 text-base">
-                      No samples found matching your criteria.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        }
-
-        {/* Modals (unchanged) */}
-        <Modal
-          isOpen={isTakeModalOpen}
-          onClose={closeTakeModal}
-          title="Take Sample"
-          footer={
-            <>
-              <button
-                onClick={closeTakeModal}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmTake}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Confirm Take
-              </button>
-            </>
-          }
-        >
-          <p className="mb-4 text-gray-700">Please enter the purpose for taking this sample:</p>
-          <input
-            type="text"
-            value={takePurpose}
-            onChange={(e) => setTakePurpose(e.target.value)}
-            placeholder="e.g., For client meeting, Internal review"
-            className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-            aria-label="Purpose for taking sample"
-          />
-        </Modal>
-
-        <Modal
-          isOpen={isPutBackModalOpen}
-          onClose={closePutBackModal}
-          title="Put Back Sample"
-          footer={
-            <>
-              <button
-                onClick={closePutBackModal}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmPutBack}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
-              >
-                Confirm Put Back
-              </button>
-            </>
-          }
-        >
-          <p className="mb-4 text-gray-700">Please enter the new position for the sample:</p>
-          <input
-            type="text"
-            value={putBackPosition}
-            onChange={(e) => setPutBackPosition(e.target.value)}
-            placeholder="e.g., A1, Shelf 3, Bin 10"
-            className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-            aria-label="New position for sample"
-          />
-          <p className="mb-4 mt-3 text-gray-700">Please enter the purpose for returning this sample:</p>
-          <input
-            type="text"
-            value={putBackPurpose}
-            onChange={(e) => setPutBackPurpose(e.target.value)}
-            placeholder="e.g., Returned after use, Incorrectly taken"
-            className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
-            aria-label="Purpose for returning sample"
-          />
-        </Modal>
-
-        {userInfo?.role === "admin" && (
-          <Modal
-            isOpen={isDeleteConfirmModalOpen}
-            onClose={closeDeleteConfirmModal}
-            title="Confirm Deletion"
-            footer={
+          {/* Action buttons (unchanged) */}
+          <div className="flex flex-wrap justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            {isEditing ? (
               <>
                 <button
-                  onClick={closeDeleteConfirmModal}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
+                  onClick={() => handleSave(sample?._id)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
                 >
                   Cancel
                 </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
-                >
-                  Delete
-                </button>
               </>
-            }
-          >
-            <p className="text-gray-700">Are you sure you want to delete this sample? This action cannot be undone.</p>
-          </Modal>
-        )}
+            ) : (
+              <>
+                <button
+                  onClick={handleEdit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
+                >
+                  Edit Sample
+                </button>
+                {sample?.availability !== "no" ? (
+                  <button
+                    onClick={openTakeModal}
+                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                  >
+                    Take
+                  </button>
+                ) : (
+                  <button
+                    onClick={openPutBackModal}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                  >
+                    Put Back
+                  </button>
+                )}
+                {userInfo?.role === "admin" && (
+                  <>
+                    <button
+                      onClick={openDeleteConfirmModal}
+                      className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => handleReducePositions(sample?.shelf, sample?.division, sample?.position)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                    >
+                      Reduce Positions
+                    </button>
+                    <button
+                      onClick={() => handleIncreasePositions(sample?.shelf, sample?.division, sample?.position)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                    >
+                      Increase Positions
+                    </button>
+                    <button
+                      onClick={() => handleShowOtherSamplesInDivision(sample?.shelf, sample?.division)}
+                      className="bg-sky-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                    >
+                      Show Full Division
+                    </button>
+                    <button
+                      onClick={() => handleNormalizeConsecutiveDivision(sample?.shelf, sample?.division)}
+                      className="bg-sky-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
+                    >
+                      Normalize Division
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Non-Editable Fields Section (unchanged) */}
+          <div className="mb-8 mt-8">
+            <h2 className="text-2xl font-bold text-gray-700 mb-4">
+              System Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              {nonEditableFields.map((field) => (
+                <div key={field.key} className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1 capitalize">
+                    {field.label}
+                  </label>
+                  <p className="text-gray-800 font-semibold bg-gray-100 p-2 rounded-md">
+                    {field.isDate ? formatDate(sample?.[field.key]) : sample?.[field.key] ?? '-'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Taken Logs (unchanged) */}
+          <h2 className="text-2xl font-bold text-gray-700 mt-10 mb-4 border-b pb-3">
+            Taken Logs
+          </h2>
+          {sample?.taken_logs && sample.taken_logs.length > 0 ? (
+            <ul className="space-y-3 pl-5 text-gray-700">
+              {sample.taken_logs.map((log, idx) => (
+                <li key={idx} className="bg-gray-50 p-3 rounded-md shadow-sm">
+                  <span className="font-semibold">Taken By:</span>{' '}
+                  {log.taken_by ?? '-'},{' '}
+                  <span className="font-semibold">at:</span>{' '}
+                  {formatDate(log.taken_at)},{' '}
+                  <span className="font-semibold">Purpose:</span>{' '}
+                  {log.purpose || 'N/A'}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 italic">No taken logs available.</p>
+          )}
+
+          {/* Returned Logs (unchanged) */}
+          <h2 className="text-2xl font-bold text-gray-700 mt-10 mb-4 border-b pb-3">
+            Returned Logs
+          </h2>
+          {sample?.returned_log && sample.returned_log.length > 0 ? (
+            <ul className="space-y-3 pl-5 text-gray-700">
+              {sample.returned_log.map((log, idx) => (
+                <li key={idx} className="bg-gray-50 p-3 rounded-md shadow-sm">
+                  <span className="font-semibold">Returned By:</span>{' '}
+                  {log.returned_by ?? '-'},{' '}
+                  <span className="font-semibold">at:</span>{' '}
+                  {formatDate(log.returned_at)},{' '}
+                  <span className="font-semibold">Returned Position:</span>{' '}
+                  {log.position || 'N/A'}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500 italic">No returned logs available.</p>
+          )}
+        </div>
       </div>
-    );
-  }
+
+      {/* Side Division */}
+      {
+        showOtherSamplesInDivision &&
+        <div>
+          <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
+            <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
+              <tr>
+                {tableHeadings?.map(({ label, key }, idx) => (
+                  <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
+                    <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
+                      <span className="font-semibold truncate">{label}</span>
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {divisionalSamples?.length > 0 ? (
+                divisionalSamples.map((sample, idx) => (
+                  <SampleListRow
+                    key={sample._id}
+                    sample={sample}
+                    index={idx}
+                    userRole={userInfo?.role}
+                    userInfo={userInfo}
+                    handleDelete={handleDelete}
+                    handleTake={handleTake}
+                    handlePutBack={handlePutBack}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={tableHeadings.length} className="text-center p-6 text-gray-500 text-base">
+                    No samples found matching your criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      }
+
+      {/* Modals (unchanged) */}
+      <Modal
+        isOpen={isTakeModalOpen}
+        onClose={closeTakeModal}
+        title="Take Sample"
+        footer={
+          <>
+            <button
+              onClick={closeTakeModal}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmTake}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Confirm Take
+            </button>
+          </>
+        }
+      >
+        <p className="mb-4 text-gray-700">Please enter the purpose for taking this sample:</p>
+        <input
+          type="text"
+          value={takePurpose}
+          onChange={(e) => setTakePurpose(e.target.value)}
+          placeholder="e.g., For client meeting, Internal review"
+          className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+          aria-label="Purpose for taking sample"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isPutBackModalOpen}
+        onClose={closePutBackModal}
+        title="Put Back Sample"
+        footer={
+          <>
+            <button
+              onClick={closePutBackModal}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmPutBack}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
+            >
+              Confirm Put Back
+            </button>
+          </>
+        }
+      >
+        <p className="mb-4 text-gray-700">Please enter the new position for the sample:</p>
+        <input
+          type="text"
+          value={putBackPosition}
+          onChange={(e) => setPutBackPosition(e.target.value)}
+          placeholder="e.g., A1, Shelf 3, Bin 10"
+          className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+          aria-label="New position for sample"
+        />
+        <p className="mb-4 mt-3 text-gray-700">Please enter the purpose for returning this sample:</p>
+        <input
+          type="text"
+          value={putBackPurpose}
+          onChange={(e) => setPutBackPurpose(e.target.value)}
+          placeholder="e.g., Returned after use, Incorrectly taken"
+          className="border border-gray-300 w-full p-2.5 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition duration-200"
+          aria-label="Purpose for returning sample"
+        />
+      </Modal>
+
+      {userInfo?.role === "admin" && (
+        <Modal
+          isOpen={isDeleteConfirmModalOpen}
+          onClose={closeDeleteConfirmModal}
+          title="Confirm Deletion"
+          footer={
+            <>
+              <button
+                onClick={closeDeleteConfirmModal}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
+              >
+                Delete
+              </button>
+            </>
+          }
+        >
+          <p className="text-gray-700">Are you sure you want to delete this sample? This action cannot be undone.</p>
+        </Modal>
+      )}
+    </div>
+  );
+}

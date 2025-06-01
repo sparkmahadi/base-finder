@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Heart, PackageCheck, Eye, PersonStanding, UtilityPole, PenToolIcon } from "lucide-react";
+import { ShoppingCart, Heart, PackageCheck, Eye, PersonStanding, UtilityPole, PenToolIcon, RecycleIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -15,12 +15,14 @@ const Dashboard = () => {
   const [samples, setSamples] = useState([]);
   const [categories, setCategories] = useState([]);
   const [takenSamples, setTakenSamples] = useState([]);
+  const [deletedSamples, setDeletedSamples] = useState([]);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
     setLoading(true);
     fetchSamples();
     fetchTakenSamples();
+    fetchDeletedSamples();
     fetchCategories();
     fetchUsers();
     setLoading(false);
@@ -43,6 +45,18 @@ const Dashboard = () => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
       setTakenSamples(res?.data?.samples);
+      setLoading(false);
+    } catch (err) {
+      toast.error("Failed to fetch samples");
+      setLoading(false);
+    }
+  };
+
+  const fetchDeletedSamples = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/deleted-samples`);
+      setDeletedSamples(res?.data?.samples);
       setLoading(false);
     } catch (err) {
       toast.error("Failed to fetch samples");
@@ -108,6 +122,12 @@ const Dashboard = () => {
       icon: <PersonStanding className="h-6 w-6 text-purple-500" />,
       link: '/dashboard/users',
       value: users?.length,
+    },
+    {
+      title: "Deleted Samples",
+      icon: <RecycleIcon className="h-6 w-6 text-purple-500" />,
+      link: '/samples/deleted-samples',
+      value: deletedSamples?.length,
     },
     {
       title: "Unique Categories in Samples",

@@ -4,10 +4,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // --- Mock API Base URL and Auth Headers ---
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities`; // IMPORTANT: Replace with your actual backend URL
+// IMPORTANT: Ensure NEXT_PUBLIC_API_BASE_URL is correctly set in your .env.local file
+// e.g., NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities`;
 
 const getAuthHeaders = () => {
-  return {}; // Placeholder for actual auth headers
+  return {}; // Placeholder for actual auth headers (e.g., { Authorization: `Bearer ${token}` })
 };
 
 // --- Confirmation Modal Component ---
@@ -54,11 +56,11 @@ export default function UtilityManager() {
 
   // Utility types configuration
   const utilityTypesConfig = [
-    { id: 'category', value:'categories', label: 'Category', placeholder: 'Enter category name' },
-    { id: 'buyer', value:'buyers', label: 'Buyer', placeholder: 'Enter buyer name' },
-    { id: 'status',  value:'statuses',label: 'Status', placeholder: 'Enter status name' },
-    { id: 'shelf', label: 'Shelf', value:'shelfs', placeholder: 'Enter shelf number (e.g., A1, 101)' },
-    { id: 'division', label: 'Division',  value:'divisions', placeholder: 'Enter division number (e.g., D1, 205)' },
+    { id: 'category', value: 'categories', label: 'Category', placeholder: 'Enter category name' },
+    { id: 'buyer', value: 'buyers', label: 'Buyer', placeholder: 'Enter buyer name' },
+    { id: 'status', value: 'statuses', label: 'Status', placeholder: 'Enter status name' },
+    { id: 'shelf', label: 'Shelf', value: 'shelfs', placeholder: 'Enter shelf number (e.g., A1, 101)' },
+    { id: 'division', label: 'Division', value: 'divisions', placeholder: 'Enter division number (e.g., D1, 205)' },
   ];
 
   // Function to fetch utilities based on selected type
@@ -66,22 +68,26 @@ export default function UtilityManager() {
     setLoading(true);
     setMessage({ text: '', type: '' });
     try {
-      let endpoint = '';
-      if (type === 'category') {
-        endpoint = `${API_BASE_URL}/categories`;
-      } else {
-        endpoint = `${API_BASE_URL}/${type}s`;
+      const currentConfig = utilityTypesConfig.find(config => config.id === type);
+      if (!currentConfig) {
+        setMessage({ text: 'Invalid utility type selected.', type: 'error' });
+        setLoading(false);
+        return;
       }
+
+      // Use currentConfig.value directly for the endpoint
+      const endpoint = `${API_BASE_URL}/${currentConfig.value}`;
 
       const response = await axios.get(endpoint, {
         headers: getAuthHeaders(),
       });
+      console.log(response);
 
       if (response.data.success) {
         setUtilities(response.data.data);
       } else {
         setUtilities([]);
-        setMessage({ text: response.data.message || `Failed to fetch ${type}s.`, type: 'error' });
+        setMessage({ text: response.data.message || `Failed to fetch ${currentConfig.label}s.`, type: 'error' });
       }
     } catch (error) {
       console.error(`Error fetching ${type}s:`, error);
@@ -110,21 +116,29 @@ export default function UtilityManager() {
       let payload = {};
       let endpoint = '';
       let method = '';
+      const currentConfig = utilityTypesConfig.find(config => config.id === utilityType);
+
+      if (!currentConfig) {
+        setMessage({ text: 'Invalid utility type selected.', type: 'error' });
+        setLoading(false);
+        return;
+      }
 
       if (utilityType === 'category') {
         if (!inputValue.trim() || !categoryStatus.trim() || categoryTotalSamples === '' || categoryTotalSamples === null || categoryTotalSamples === undefined) {
           setMessage({ text: 'Category name, status, and total samples are required.', type: 'error' });
-          setLoading(false);
           return;
         }
-        endpoint = `${API_BASE_URL}/categories`;
+        endpoint = `${API_BASE_URL}/categories`; // Assuming categories has its own /categories endpoint
         payload = {
           cat_name: inputValue.trim(),
           status: categoryStatus.trim(),
           totalSamples: Number(categoryTotalSamples),
           createdBy: createdBy,
+          utility_type: utilityType,
         };
         if (editingUtility) {
+          console.log("editingUtility", editingUtility);
           payload._id = editingUtility._id; // Add ID for update
           method = 'put';
         } else {
@@ -132,17 +146,19 @@ export default function UtilityManager() {
         }
       } else {
         if (!inputValue.trim()) {
-            setMessage({ text: 'Please enter a value.', type: 'error' });
+          setMessage({ text: 'Please enter a value.', type: 'error' });
           setLoading(false);
           return;
         }
-        endpoint = `${API_BASE_URL}/${utilityType}s`;
+        // Use currentConfig.value for the endpoint
+        endpoint = `${API_BASE_URL}/${currentConfig.value}`;
+
         if (utilityType === 'buyer' || utilityType === 'status') {
-          payload = { name: inputValue.trim(), createdBy: createdBy };
+          payload = { value: inputValue.trim(), createdBy: createdBy, utility_type: utilityType };
         } else { // shelf or division
-          payload = { number: inputValue.trim(), createdBy: createdBy };
+          payload = { value: inputValue.trim(), createdBy: createdBy,  utility_type: utilityType  };
         }
-        payload.utility_type = utilityType; // Add utility_type for generic update
+
         if (editingUtility) {
           payload._id = editingUtility._id; // Add ID for update
           method = 'put';
@@ -181,7 +197,9 @@ export default function UtilityManager() {
       setInputValue(utility.cat_name);
       setCategoryStatus(utility.status);
       setCategoryTotalSamples(utility.totalSamples);
-    } else {
+    } else if (utilityType === 'buyer' || utilityType === 'status') {
+      setInputValue(utility.value);
+    } else { // shelf or division
       setInputValue(utility.value);
     }
   };
@@ -201,10 +219,18 @@ export default function UtilityManager() {
     setShowConfirmModal(false); // Close modal
     try {
       let endpoint = '';
+      const currentConfig = utilityTypesConfig.find(config => config.id === utilityType);
+      if (!currentConfig) {
+        setMessage({ text: 'Invalid utility type selected.', type: 'error' });
+        setLoading(false);
+        return;
+      }
+
       if (utilityType === 'category') {
         endpoint = `${API_BASE_URL}/categories/${itemToDelete._id}`;
       } else {
-        endpoint = `${API_BASE_URL}/utilities/${utilityType}/${itemToDelete._id}`;
+        // Use currentConfig.value for the endpoint
+        endpoint = `${API_BASE_URL}/${currentConfig.value}/${itemToDelete._id}`;
       }
 
       const response = await axios.delete(endpoint, {
@@ -231,7 +257,7 @@ export default function UtilityManager() {
     setItemToDelete(null);
   };
 
-  // Get current utility type config
+  // Get current utility type config for rendering labels and placeholders
   const currentConfig = utilityTypesConfig.find(config => config.id === utilityType);
 
   return (
@@ -270,7 +296,7 @@ export default function UtilityManager() {
         {/* Add/Edit New Utility Section */}
         <div className="mb-8 p-4 border border-gray-200 rounded-lg bg-gray-50">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            {editingUtility ? `Edit ${currentConfig.value}` : `Add New ${currentConfig.value}`}
+            {editingUtility ? `Edit ${currentConfig?.label}` : `Add New ${currentConfig?.label}`}
           </h2>
           <div className="flex flex-col gap-4">
             <input
@@ -309,7 +335,7 @@ export default function UtilityManager() {
                 className="flex-1 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? 'Saving...' : (editingUtility ? `Update ${currentConfig.value}` : `Add ${currentConfig.value}`)}
+                {loading ? 'Saving...' : (editingUtility ? `Update ${currentConfig?.label}` : `Add ${currentConfig?.label}`)}
               </button>
               {editingUtility && (
                 <button
@@ -341,12 +367,12 @@ export default function UtilityManager() {
         {/* Existing Utilities List */}
         <div>
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            Existing {currentConfig.value}s
+            Existing {currentConfig?.label}s
           </h2>
           {loading && utilities.length === 0 ? (
-            <p className="text-gray-600">Loading {currentConfig.value}s...</p>
+            <p className="text-gray-600">Loading {currentConfig?.label}s...</p>
           ) : utilities.length === 0 ? (
-            <p className="text-gray-600">No {currentConfig.value}s found. Add one above!</p>
+            <p className="text-gray-600">No {currentConfig?.label}s found. Add one above!</p>
           ) : (
             <ul className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
               {utilities.map((utility) => (

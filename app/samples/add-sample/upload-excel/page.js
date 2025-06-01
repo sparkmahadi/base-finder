@@ -184,8 +184,8 @@ export default function UploadExcel() {
         <h3 className="font-bold text-lg mb-2">Important Considerations Before Uploading:</h3>
         <ul className="list-disc list-inside space-y-1">
           <li>Ensure your Excel file adheres to the **consistent format** provided.</li>
-          <li>Choose **'OK' in the increment position alert** if you want to add samples on top of existing ones in the same shelf and division.</li>
-          <li>Choose **'Cancel' in the increment position alert** if you are adding samples to a fresh or empty division where no samples exist.</li>
+          <li>Choose **&apos;OK&apos; in the increment position alert** if you want to add samples on top of existing ones in the same shelf and division.</li>
+          <li>Choose **&apos;Cancel&apos; in the increment position alert** if you are adding samples to a fresh or empty division where no samples exist.</li>
           <li>**There is no undo action** after a successful upload. Please review carefully.</li>
         </ul>
       </div>

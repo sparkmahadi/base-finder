@@ -92,7 +92,7 @@ const InputSampleForm = () => {
   };
 
   const apiCreateBuyer = async (buyerName) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/buyers`, { name: buyerName, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/api/utilities/buyers`, { value: buyerName, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -102,21 +102,21 @@ const InputSampleForm = () => {
   const apiCreateStatus = async (statusName) => {
     // This might be a more generic utility endpoint or specific to statuses.
     // For now, assuming it adds it if not exists.
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/statuses`, { name: statusName, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/api/utilities/statuses`, { value: statusName, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiCreateShelf = async (shelfNumber) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/shelfs`, { number: shelfNumber, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/api/utilities/shelfs`, { value: shelfNumber, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiCreateDivision = async (divisionNumber) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/divisions`, { number: divisionNumber, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/api/utilities/divisions`, { value: divisionNumber, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -163,7 +163,8 @@ const InputSampleForm = () => {
       const newOptions = { ...prev };
 
       if (categoriesRes.status === 'fulfilled') {
-        newOptions.categories = categoriesRes.value.categories || categoriesRes.value || [];
+        console.log(categoriesRes);
+        newOptions.categories = categoriesRes.value.data || categoriesRes.value || [];
       } else {
         console.error("Category re-fetch error:", categoriesRes.reason);
       }
@@ -365,7 +366,7 @@ const InputSampleForm = () => {
       const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/increase-positions-by-shelf-division`, body);
       console.log(res);
       const data = res?.data;
-      if (data?.modifiedCount > 0) {
+      if (data?.success) {
         toast.success(data?.message);
         toast.success(`Total positions modified- ${data?.modifiedCount}`);
         return true;

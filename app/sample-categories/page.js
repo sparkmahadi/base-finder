@@ -87,7 +87,7 @@ export default function ListCategories() {
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Categories List</h2>
+      <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Categories List: Under development</h2>
 
       <div className="space-y-4 grid grid-cols-5 gap-5">
         {categories?.map((category) => (

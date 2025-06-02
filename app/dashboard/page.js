@@ -68,7 +68,7 @@ const Dashboard = () => {
     try {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories`);
       console.log(res);
-      setCategories(res?.data);
+      setCategories(res?.data?.data);
       setLoading(false);
     } catch (err) {
       setLoading(false);
@@ -180,10 +180,10 @@ const Dashboard = () => {
               className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition cursor-pointer"
             >
               <div>
-                <h2 className="text-gray-600 text-sm">{stat.title}</h2>
-                <p className="text-xl font-bold">{stat.value}</p>
+                <h2 className="text-gray-600 text-sm">{stat?.title}</h2>
+                <p className="text-xl font-bold">{stat?.value}</p>
               </div>
-              {stat.icon}
+              {stat?.icon}
             </div>
           ))
         }

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import Loader from '../components/Loader';
 
 // --- Mock API Base URL and Auth Headers ---
 // IMPORTANT: Ensure NEXT_PUBLIC_API_BASE_URL is correctly set in your .env.local file
@@ -39,6 +41,7 @@ const ConfirmationModal = ({ message, onConfirm, onCancel }) => {
 
 // --- Main UtilityManager Component ---
 export default function UtilityManager() {
+  const {userInfo} = useAuth();
   const [utilityType, setUtilityType] = useState('category'); // Default to 'category'
   const [inputValue, setInputValue] = useState('');
   const [categoryStatus, setCategoryStatus] = useState('active'); // For category specific input
@@ -51,8 +54,7 @@ export default function UtilityManager() {
   const [itemToDelete, setItemToDelete] = useState(null); // Stores the item to be deleted
 
   // Mock user info for 'createdBy' field
-  const userInfo = { name: 'Demo User' };
-  const createdBy = userInfo.name;
+  const createdBy = userInfo?.name;
 
   // Utility types configuration
   const utilityTypesConfig = [
@@ -259,7 +261,7 @@ export default function UtilityManager() {
 
   // Get current utility type config for rendering labels and placeholders
   const currentConfig = utilityTypesConfig.find(config => config.id === utilityType);
-
+ if(loading) return <Loader/>
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
       <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full max-w-2xl">

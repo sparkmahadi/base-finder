@@ -75,7 +75,7 @@ export default function SampleDetails({ params }) {
 
   const fetchSample = async (idToFetch) => {
     try {
-      res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${idToFetch}`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${idToFetch}`);
       console.log(res);
       setSample(res?.data?.sample);
       console.log('Fetched from regular samples:', res?.data);

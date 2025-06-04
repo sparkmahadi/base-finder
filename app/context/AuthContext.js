@@ -9,15 +9,14 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(true); // Adding a loading state
-
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       setIsAuthenticated(true);
       getUserInfo(token);
     } else {
-      setLoading(false); // Set loading to false if no token exists
+      setLoading(false);
     }
   }, []);
 

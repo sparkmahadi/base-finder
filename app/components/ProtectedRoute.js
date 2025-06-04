@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import Loader from "./Loader";
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
@@ -17,13 +17,8 @@ export default function ProtectedRoute({ children }) {
   }, [isAuthenticated, loading, router]);
 
   // If still loading, show a loading spinner
-  if (loading) {
-    return <Loader />;
-  }
-
-  // If not authenticated, don't render children (handled by useEffect)
-  if (!isAuthenticated) {
-    return <h3>Loading  & Authenticating.......</h3>; // Optionally, return nothing while redirecting
+  if (loading || !isAuthenticated) {
+    return <Loader message={"Authenticating & Verifying..."}/>;
   }
 
   return children; // If authenticated, render the children (protected content)

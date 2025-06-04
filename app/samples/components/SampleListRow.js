@@ -1,147 +1,113 @@
 // components/SampleListRow.jsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import Modal from "./Modal"; // Changed import from TakingModal to the reusable Modal component
-import axios from "axios";
+import Modal from "./Modal"; // Reusable Modal component
 import { toast } from "react-toastify";
-import DeletionModal from "./DeletionModal";
+import DeletionModal from "./DeletionModal"; // This is a specialized modal, assumed to be separate
 
-const SampleListRow = ({ userRole, sample, index, handleTake, handlePutBack, userInfo }) => {
+const SampleListRow = ({
+  userRole,
+  sample,
+  index,
+  handleTake, // Prop from parent (SampleListClient)
+  handlePutBack, // Prop from parent (SampleListClient)
+  handleDelete: parentHandleDelete, // Prop from parent (SampleListClient), renamed for clarity
+  userInfo,
+}) => {
   const router = useRouter();
   const [isTakeModalOpen, setIsTakeModalOpen] = useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
   const [purpose, setPurpose] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const [sampleToDeleteId, setSampleToDeleteId] = useState(null);
-  const [reduceOtherPositions, setReduceOtherPositions] = useState(false);
 
   // State for Put Back Modal
   const [isPutBackModalOpen, setIsPutBackModalOpen] = useState(false);
   const [putBackPosition, setPutBackPosition] = useState("");
   const [putBackPurpose, setPutBackPurpose] = useState("");
 
-  const renderCell = (name, value) => {
+  const renderCell = useCallback((name, value) => {
     if ((name === "taken_at" || name === "added_at" || name.includes("date")) && value) {
       try {
         const date = new Date(value);
-        return format(date, "PP");
+        // Check for valid date to prevent "Invalid Date" output
+        if (!isNaN(date.getTime())) {
+          return format(date, "PP");
+        }
       } catch (err) {
-        return value; // Return original value if date parsing fails
+        // Fallback to original value if parsing fails
+        console.warn(`Date parsing failed for ${name}: ${value}`, err);
       }
     }
     return value || "-";
-  };
+  }, []); // No dependencies, pure function
 
-  const renderTd = (name, value, extra = "") => (
+  const renderTd = useCallback((name, value, extra = "") => (
     <td className={`py-3 px-3 border border-gray-200 text-sm break-words ${extra} max-w-20`} title={value}>
       {renderCell(name, value)}
     </td>
-  );
+  ), [renderCell]); // Dependency: renderCell
 
-  const openTakeModal = () => setIsTakeModalOpen(true);
-  const closeTakeModal = () => {
+  const openTakeModal = useCallback(() => setIsTakeModalOpen(true), []);
+  const closeTakeModal = useCallback(() => {
     setIsTakeModalOpen(false);
     setPurpose(""); // Clear purpose on close
-  };
+  }, []);
 
-  const openDeleteConfirmModal = () => {
-    setSampleToDeleteId(sample?._id);
+  const openDeleteConfirmModal = useCallback(() => {
+    setSampleToDeleteId(sample?._id); // Ensure correct sample ID is set
     setIsDeleteConfirmModalOpen(true);
-    setReduceOtherPositions(false); // Reset checkbox state when opening modal
-  };
+  }, [sample?._id]);
 
-  const closeDeleteConfirmModal = () => {
+  const closeDeleteConfirmModal = useCallback(() => {
     setIsDeleteConfirmModalOpen(false);
     setSampleToDeleteId(null);
-  };
+  }, []);
 
-  // The single handleDelete function now takes the boolean directly
-  const handleDelete = async (reduceOtherPositions) => {
-    console.log(reduceOtherPositions);
+  // This function now just calls the parent's handleDelete prop
+  const handleConfirmDelete = useCallback((reduceOtherPositionsValue) => {
     if (!sampleToDeleteId) {
       toast.error("No sample selected for deletion.");
       return;
     }
+    // Call the parent's handleDelete function, passing the ID and the boolean
+    parentHandleDelete(sampleToDeleteId, reduceOtherPositionsValue);
+    closeDeleteConfirmModal(); // Close modal immediately
+  }, [sampleToDeleteId, parentHandleDelete, closeDeleteConfirmModal]);
 
-    setLoading(true);
-    try {
-      const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${sampleToDeleteId}?reducePositions=${reduceOtherPositions}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-      console.log(res);
-      if (res?.data?.success) {
-        toast.success("Sample deleted successfully");
-        toast.success(res?.data?.message);
-        // setRefetch((prev) => !prev);
-      } else {
-        toast.error(res?.data?.message);
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete sample : Frontend Error");
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleConfirmTake = () => {
+  const handleConfirmTake = useCallback(() => {
     if (!purpose.trim()) {
-      alert("Please enter a purpose."); // Consider a more sophisticated notification system
+      toast.error("Please enter a purpose.");
       return;
     }
+    // Call the parent's handleTake function
     handleTake(sample._id, purpose);
     closeTakeModal();
-  };
+  }, [purpose, handleTake, sample._id, closeTakeModal]);
 
   // --- Put Back Modal Handlers ---
-  const openPutBackModal = () => setIsPutBackModalOpen(true);
-  const closePutBackModal = () => {
+  const openPutBackModal = useCallback(() => setIsPutBackModalOpen(true), []);
+  const closePutBackModal = useCallback(() => {
     setIsPutBackModalOpen(false);
     setPutBackPosition(""); // Clear position on close
     setPutBackPurpose(""); // Clear purpose on close
-  };
+  }, []);
 
-  const handleConfirmPutBack = async (currentSampleId) => {
+  const handleConfirmPutBackLocal = useCallback(async () => {
     if (!putBackPosition.trim()) {
       toast.error("Please enter the new position for the sample.");
       return;
-
     }
-
-    setLoading(true);
-    try {
-      const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${currentSampleId}`, // Use the ID from the URL
-        { position: putBackPosition, returned_by: userInfo?.username, return_purpose: putBackPurpose }, // Pass purpose
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-      );
-      if (res?.data?.success) {
-        toast.success(res.data.message);
-        closePutBackModal();
-
-        // *** IMPORTANT: Redirect to the new _id returned by the backend ***
-        if (res.data.new_sample_id) {
-          router.replace(`/samples/${res.data.new_sample_id}`); // Replaces current history entry
-        } else {
-          setRefetchTrigger((prev) => prev + 1); // Fallback re-fetch
-        }
-
-      } else {
-        toast.error(res.data.message || "Failed to put back sample.");
-      }
-    } catch (error) {
-      console.error("Error putting back sample:", error);
-      toast.error("Failed to put back sample.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Call the parent's handlePutBack function
+    await handlePutBack(sample?._id, putBackPosition, putBackPurpose); // Pass purpose here
+    closePutBackModal();
+    // The parent (SampleListClient) will handle the re-fetch or redirect.
+    // No need for router.replace or setRefetchTrigger here.
+  }, [sample?._id, putBackPosition, putBackPurpose, handlePutBack, closePutBackModal]);
 
   return (
     <>
@@ -229,16 +195,15 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handlePutBack, use
         />
       </Modal>
 
-      {/* Delete Confirmation Modal (Now using the reusable 'Modal' component) */}
+      {/* Delete Confirmation Modal (DeletionModal is assumed to be specialized) */}
       {userRole === "admin" && (
         <DeletionModal
           isOpen={isDeleteConfirmModalOpen}
           onClose={closeDeleteConfirmModal}
           title="Confirm Deletion"
-          // Pass distinct functions for Yes and No clicks
-          onConfirmYes={() => handleDelete('yes')}
-          onConfirmNo={() => handleDelete('no')}
-          showReducePositionsOption={true} // Keep this true to show the Yes/No prompt
+          onConfirmYes={() => handleConfirmDelete(true)} // Pass true for reduceOtherPositions
+          onConfirmNo={() => handleConfirmDelete(false)} // Pass false for reduceOtherPositions
+          showReducePositionsOption={true}
         >
           <p className="text-gray-700">Are you sure you want to delete this sample? This action cannot be undone.</p>
         </DeletionModal>
@@ -258,7 +223,7 @@ const SampleListRow = ({ userRole, sample, index, handleTake, handlePutBack, use
               Cancel
             </button>
             <button
-              onClick={() => handleConfirmPutBack(sample?._id)}
+              onClick={handleConfirmPutBackLocal}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors duration-200"
             >
               Confirm Put Back

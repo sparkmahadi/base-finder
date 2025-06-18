@@ -67,6 +67,7 @@ const DeletedSampleListRow = ({ userRole, sample, index, handleRestore,handleDel
                 {renderTd("shelf", sample?.shelf, "font-semibold")}
                 {renderTd("division", sample?.division, "font-semibold")}
                 {renderTd("position", sample?.position, "font-semibold")}
+                {renderTd("status", sample?.status, "font-semibold")}
                 {renderTd("availability", sample?.availability === "no" ? (
                     <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Taken / N/A</span>
                 ) : (

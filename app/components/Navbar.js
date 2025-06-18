@@ -69,6 +69,7 @@ export default function Navbar() {
         <div className="hidden md:flex space-x-6 items-center">
           <NavButton label="Samples" icon={<List size={18} />} onClick={() => router.push("/samples")} />
           <NavButton label="Add Sample" icon={<PlusCircle size={18} />} onClick={() => router.push("/samples/add-sample")} />
+          <NavButton label="Pattern Release" icon={<PlusCircle size={18} />} onClick={() => router.push("/pattern-release-log")} />
           <NavButton label="Upload excel" icon={<PlusCircle size={18} />} onClick={() => router.push("/samples/add-sample/upload-excel")} />
           <NavButton label="Taken Samples" icon={<List size={18} />} onClick={() => router.push("/samples/taken-samples")} />
 
@@ -129,6 +130,7 @@ export default function Navbar() {
         <div className="md:hidden bg-blue-700 px-4 py-3 space-y-3 text-white">
           <MobileLink label="Samples" onClick={() => router.push("/samples")} />
           <MobileLink label="Add Sample" onClick={() => router.push("/samples/add-sample")} />
+          <MobileLink label="Pattern Release" onClick={() => router.push("/pattern-release-log")} />
           <MobileLink label="Upload excel" onClick={() => router.push("/samples/add-sample/upload-excel")} />
           <MobileLink label="Taken Samples" onClick={() => router.push("/samples/taken-samples")} />
 

@@ -279,7 +279,7 @@ function SampleDetails() {
                                 </button>
                                 {sample?.availability !== "no" ? (
                                     <button
-                                        onClick={() => openTakeModal(sample?._id)} {/* Pass sample ID */}
+                                        onClick={() => openTakeModal(sample?._id)}
                                         className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
                                         disabled={overallLoading}
                                     >
@@ -287,7 +287,7 @@ function SampleDetails() {
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => openPutBackModal(sample?._id)} {/* Pass sample ID */}
+                                        onClick={() => openPutBackModal(sample?._id)}
                                         className="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
                                         disabled={overallLoading}
                                     >
@@ -297,7 +297,7 @@ function SampleDetails() {
                                 {userInfo?.role === "admin" && (
                                     <>
                                         <button
-                                            onClick={() => openDeleteConfirmModal(sample?._id)} {/* Pass sample ID */}
+                                            onClick={() => openDeleteConfirmModal(sample?._id)}
                                             className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-sm font-medium shadow-md transition duration-200"
                                             disabled={overallLoading}
                                         >

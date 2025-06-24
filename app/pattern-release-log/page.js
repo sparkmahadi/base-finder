@@ -87,6 +87,7 @@ const PatternReleaseLog = () => {
             setLoading(true);
             try {
                 const logsResponse = await axios.get(`${API_BASE_URL}/api/pattern-release-logs`);
+                const sortedByDateDesc = logsResponse?.data.sort((a, b) => new Date(b.date) - new Date(a.date));
                 setLogs(logsResponse.data);
 
                 const [categories, buyers, statuses] = await Promise.all([
@@ -329,7 +330,7 @@ const PatternReleaseLog = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 p-4 sm:p-8 flex items-center justify-center font-sans">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-7xl">
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full">
                 <h1 className="text-3xl font-extrabold text-gray-800 mb-6 text-center">
                     Pattern Release Log
                 </h1>
@@ -543,34 +544,34 @@ const PatternReleaseLog = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Date
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Buyer
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Style
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Category
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Body
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Size
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Added By
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Added At
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -579,34 +580,34 @@ const PatternReleaseLog = () => {
                             {filteredLogs.length > 0 ? (
                                 filteredLogs.map((log) => (
                                     <tr key={log?._id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {new Date(log?.date).toLocaleDateString()}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.buyer}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800 font-semibold">
                                             {log?.style}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.item}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.body}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.size}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.status}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.added_by}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                        <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.added_at ? format(log?.added_at, "Pp") : "Not Found"}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <td className="px-3 py-3 text-sm font-medium">
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => startEditing(log)}
@@ -629,7 +630,7 @@ const PatternReleaseLog = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
+                                    <td colSpan="8" className="px-3 py-3 text-center text-gray-500">
                                         No log entries found.
                                     </td>
                                 </tr>

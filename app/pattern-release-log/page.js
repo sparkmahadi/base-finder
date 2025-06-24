@@ -88,7 +88,7 @@ const PatternReleaseLog = () => {
             try {
                 const logsResponse = await axios.get(`${API_BASE_URL}/api/pattern-release-logs`);
                 const sortedByDateDesc = logsResponse?.data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                setLogs(logsResponse.data);
+                setLogs(sortedByDateDesc);
 
                 const [categories, buyers, statuses] = await Promise.all([
                     apiFetchCategories(),

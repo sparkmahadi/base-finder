@@ -48,6 +48,26 @@ const Tools = () => {
             setLoading(false);
         }
     }
+
+    const handleResetAndReassignIDs = async () => {
+        setLoading(true);
+        try {
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/reset-and-reassign-unique-ids-to-existing-samples`, userInfo);
+            console.log(res);
+            const data = res?.data;
+            if (data?.success) {
+                toast.success(data?.message);
+            } else {
+                toast.error(data?.message);
+                toast.error("Data cannot be modified or no data available!!!")
+            }
+        } catch (err) {
+            toast.error("Failed to fetch sample details.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div>
 
@@ -82,6 +102,16 @@ const Tools = () => {
                                 <div>
                                     <h2 className="text-gray-600 text-sm">Add a unique sample_id to all samples in db</h2>
                                     <button onClick={handleAddSampleIdsToExistingDocuments} className='bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md cursor-pointer"'>Add Unique Ids</button>
+                                </div>
+                            </div>
+
+
+                            <div
+                                className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition"
+                            >
+                                <div>
+                                    <h2 className="text-gray-600 text-sm">Add a unique sample_id to all samples in db</h2>
+                                    <button onClick={handleResetAndReassignIDs} className='bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md cursor-pointer"'>Reset and Reassign Unique Ids</button>
                                 </div>
                             </div>
 

@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
           <Navbar />
           {children}
           <Footer />
-          <ToastContainer position="top-center"/>
+          <ToastContainer position="bottom-right"/>
         </AuthProvider>
       </body>
     </html>

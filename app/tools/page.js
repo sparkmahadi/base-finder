@@ -13,7 +13,7 @@ const Tools = () => {
     const handleConvertToNumbers = async () => {
         setLoading(true);
         try {
-            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/convert-shelfs-divisions-positions-to-numbers`, userInfo);
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/convert-shelfs-divisions-positions-to-numbers`, userInfo);
             console.log(res);
             const data = res?.data;
             if (data?.success) {
@@ -33,7 +33,7 @@ const Tools = () => {
     const handleAddSampleIdsToExistingDocuments = async () => {
         setLoading(true);
         try {
-            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/add-unique-ids-to-existing-samples`, userInfo);
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/add-unique-ids-to-existing-samples`, userInfo);
             console.log(res);
             const data = res?.data;
             if (data?.success) {
@@ -52,7 +52,7 @@ const Tools = () => {
     const handleResetAndReassignIDs = async () => {
         setLoading(true);
         try {
-            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/reset-and-reassign-unique-ids-to-existing-samples`, userInfo);
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/reset-and-reassign-unique-ids-to-existing-samples`, userInfo);
             console.log(res);
             const data = res?.data;
             if (data?.success) {

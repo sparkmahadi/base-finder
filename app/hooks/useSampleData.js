@@ -3,12 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-/**
- * Custom hook for managing sample data, including fetching, deleting, taking, and putting back samples.
- *
- * @param {Array} initialSamples - Initial array of samples, usually from server-side props.
- * @returns {Object} An object containing sample data, loading states, and action functions.
- */
 export const useSampleData = (initialSamples) => {
   const [samples, setSamples] = useState(initialSamples);
   const [isLoading, setIsLoading] = useState(!initialSamples.length); // General loading for initial fetch
@@ -21,7 +15,7 @@ export const useSampleData = (initialSamples) => {
   const refreshSamples = useCallback(async (searchTerm = "") => {
     setIsLoading(true); // General loading for refresh
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/samples`, {
+      const res = await axios.get(`${API_BASE_URL}/samples`, {
         params: { search: searchTerm }, // Pass search term for refresh too
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
@@ -54,7 +48,7 @@ export const useSampleData = (initialSamples) => {
     setIsMutating(true);
     try {
       const res = await axios.delete(
-        `${API_BASE_URL}/api/samples/${id}?reducePositions=${reduceOtherPositions}`,
+        `${API_BASE_URL}/samples/${id}?reducePositions=${reduceOtherPositions}`,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -83,7 +77,7 @@ export const useSampleData = (initialSamples) => {
       taken_at: new Date().toISOString(),
     };
     try {
-      const res = await axios.put(`${API_BASE_URL}/api/samples/${id}/take`, body, {
+      const res = await axios.put(`${API_BASE_URL}/samples/${id}/take`, body, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data?.success) {
@@ -105,7 +99,7 @@ export const useSampleData = (initialSamples) => {
     setIsMutating(true);
     try {
       const res = await axios.put(
-        `${API_BASE_URL}/api/samples/putback/${sampleId}`,
+        `${API_BASE_URL}/samples/putback/${sampleId}`,
         { position: newPosition, returned_by: userInfo?.username, return_purpose: returnPurpose },
         {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },

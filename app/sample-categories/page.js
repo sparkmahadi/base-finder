@@ -33,7 +33,7 @@ export default function ListCategories() {
     if (confirm) {
       setFuncLoading(true);
       try {
-        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories/${id}`, {
+        const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/categories/${id}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },

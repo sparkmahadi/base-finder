@@ -5,7 +5,7 @@ import axios from "axios";
 // Define your server-side fetch functions
 const fetchSamplesServer = async () => {
   try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples`);
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples`);
     return res?.data?.samples || [];
   } catch (err) {
     console.error("Server Error: Failed to fetch samples", err);
@@ -17,7 +17,7 @@ const fetchSamplesServer = async () => {
 
 const fetchTakenSamplesServer = async () => {
   try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`);
     return res?.data?.samples || [];
   } catch (err) {
     console.error("Server Error: Failed to fetch taken samples", err);
@@ -27,7 +27,7 @@ const fetchTakenSamplesServer = async () => {
 
 const fetchDeletedSamplesServer = async () => {
   try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/deleted-samples`);
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/deleted-samples`);
     return res?.data?.samples || [];
   } catch (err) {
     console.error("Server Error: Failed to fetch deleted samples", err);
@@ -37,7 +37,7 @@ const fetchDeletedSamplesServer = async () => {
 
 const fetchCategoriesServer = async () => {
   try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories`);
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/categories`);
     return res?.data?.data || [];
   } catch (err) {
     console.error("Server Error: Failed to fetch categories", err);
@@ -47,7 +47,7 @@ const fetchCategoriesServer = async () => {
 
 const fetchUsersServer = async () => {
   try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`);
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`);
     return res?.data || [];
   } catch (err) {
     console.error("Server Error: Failed to fetch users", err);

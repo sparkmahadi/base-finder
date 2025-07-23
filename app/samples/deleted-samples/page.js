@@ -22,7 +22,7 @@ const DeletedSamplesList = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/deleted-samples`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/deleted-samples`
       );
       setSamples(res.data.samples);
       setLoading(false);
@@ -36,13 +36,13 @@ const DeletedSamplesList = () => {
   const handleRestore = async (sampleId, shelf, division, newPosition) => {
     if (sampleId && shelf && division && newPosition) {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/check-position-availability?shelf=${shelf}&division=${division}&position=${newPosition}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/check-position-availability?shelf=${shelf}&division=${division}&position=${newPosition}`
       );
       const positionData = res?.data;
       if (positionData?.isPositionEmpty) {
         try {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/deleted-samples/restore/${sampleId}`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/deleted-samples/restore/${sampleId}`,
             {
               method: "PUT",
               body: JSON.stringify({
@@ -72,7 +72,7 @@ const DeletedSamplesList = () => {
         if (confirm) {
           try {
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/deleted-samples/restore/${sampleId}`,
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/deleted-samples/restore/${sampleId}`,
               {
                 method: "PUT",
                 body: JSON.stringify({
@@ -116,7 +116,7 @@ const DeletedSamplesList = () => {
       setLoading(true);
       try {
         const res = await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/permanent-delete/${sampleToDeleteId}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/permanent-delete/${sampleToDeleteId}`,
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }
@@ -148,7 +148,7 @@ const DeletedSamplesList = () => {
       setLoading(true);
       try {
         const res = await axios.delete(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/permanent-delete-all`, // This endpoint needs to be implemented on your backend
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/permanent-delete-all`, // This endpoint needs to be implemented on your backend
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }

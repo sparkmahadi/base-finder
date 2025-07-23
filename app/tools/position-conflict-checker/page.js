@@ -32,7 +32,7 @@ export default function PositionConflictChecker() {
     };
 
     try {
-      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}/take`, body, {
+      const res = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${id}/take`, body, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res?.data?.success) {
@@ -57,7 +57,7 @@ export default function PositionConflictChecker() {
 
   const handlePutBack = async (sampleId, newPosition) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/putback/${sampleId}`, {
         method: "PUT",
         body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
         headers: { "Content-Type": "application/json" },
@@ -121,7 +121,7 @@ export default function PositionConflictChecker() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples-conflict`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples-conflict`,
         requestBody // Send empty object for "check all", or {shelf, division}
       );
 

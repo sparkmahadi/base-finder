@@ -28,7 +28,7 @@ function formatDate(dateString) {
 }
 async function getSampleData(sampleId) {
   try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${sampleId}`);
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${sampleId}`);
     return { sample: res.data.sample, error: null };
   } catch (error) {
     console.error("Error fetching sample details on server:", error);
@@ -75,7 +75,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
         setLoading(true);
         setError(null);
         try {
-          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${currentSampleId}`);
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`);
           setSample(res?.data?.sample);
           toast.success("Sample details loaded successfully!");
         } catch (err) {
@@ -93,7 +93,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
             setLoading(true);
             setError(null);
             try {
-              const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${currentSampleId}`);
+              const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`);
               setSample(res?.data?.sample);
               toast.success("Sample details updated!");
             } catch (err) {
@@ -113,7 +113,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setDivisionalSamplesLoading(true);
     setDivisionalSamples([]); // Clear previous data
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/get-by-shelf-and-division?shelf=${shelf}&division=${division}`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/get-by-shelf-and-division?shelf=${shelf}&division=${division}`);
       const samplesData = res?.data?.samples;
       if (samplesData && samplesData.length > 0) {
         const sortedSamplesData = samplesData.sort((a, b) => {
@@ -168,7 +168,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
       };
 
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${id}`,
         payload,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -200,7 +200,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${currentSampleId}/take`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}/take`,
         { purpose: takePurpose, taken_by: userInfo?.username },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -238,7 +238,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const res = await axios.put(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${currentSampleId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/putback/${currentSampleId}`,
         { position: putBackPosition, returned_by: userInfo?.username, return_purpose: putBackPurpose },
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -268,7 +268,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${currentSampleId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`,
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
       if (res?.data?.success) {
@@ -290,7 +290,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const body = { shelf: parseInt(shelf), division: parseInt(division), currentPosition: parseInt(currentPosition) };
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/increase-positions-by-shelf-division`, body, {
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/increase-positions-by-shelf-division`, body, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = res?.data;
@@ -313,7 +313,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const body = { shelf: parseInt(shelf), division: parseInt(division), currentPosition: parseInt(currentPosition) };
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/decrease-positions-by-shelf-division`, body, {
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/decrease-positions-by-shelf-division`, body, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = res?.data;
@@ -341,7 +341,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setLoading(true);
     try {
       const body = { shelf: parseInt(shelf), division: parseInt(division) };
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/normalize-positions-in-division`, body, {
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/normalize-positions-in-division`, body, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const data = res?.data;

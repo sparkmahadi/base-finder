@@ -37,47 +37,47 @@ const InputSampleForm = () => {
 
   // Existing API calls
   const apiFetchCategories = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/utilities/categories`, {
+    const response = await axios.get(`${API_BASE_URL}/utilities/categories`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiFetchBuyers = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/utilities/buyers`, {
+    const response = await axios.get(`${API_BASE_URL}/utilities/buyers`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiFetchStatuses = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/utilities/statuses`, {
+    const response = await axios.get(`${API_BASE_URL}/utilities/statuses`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
   const apiFetchShelfs = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/utilities/shelfs`, {
+    const response = await axios.get(`${API_BASE_URL}/utilities/shelfs`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
   const apiFetchDivisions = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/utilities/divisions`, {
+    const response = await axios.get(`${API_BASE_URL}/utilities/divisions`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiFetchSamplesByLocation = async (shelf, division) => {
-    const response = await axios.get(`${API_BASE_URL}/api/samples-by-location?shelf=${shelf}&division=${division}`, {
+    const response = await axios.get(`${API_BASE_URL}/samples-by-location?shelf=${shelf}&division=${division}`, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiSubmitSample = async (sampleData) => {
-    const response = await axios.post(`${API_BASE_URL}/api/samples`, sampleData, {
+    const response = await axios.post(`${API_BASE_URL}/samples`, sampleData, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -85,14 +85,14 @@ const InputSampleForm = () => {
 
   // NEW API calls for adding utilities (implement these on your backend!)
   const apiCreateCategory = async (categoryName) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/categories`, { cat_name: categoryName, status: "active", totalSamples: 0, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/utilities/categories`, { cat_name: categoryName, status: "active", totalSamples: 0, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiCreateBuyer = async (buyerName) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/buyers`, { value: buyerName, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/utilities/buyers`, { value: buyerName, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -102,21 +102,21 @@ const InputSampleForm = () => {
   const apiCreateStatus = async (statusName) => {
     // This might be a more generic utility endpoint or specific to statuses.
     // For now, assuming it adds it if not exists.
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/statuses`, { value: statusName, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/utilities/statuses`, { value: statusName, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiCreateShelf = async (shelfNumber) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/shelfs`, { value: shelfNumber, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/utilities/shelfs`, { value: shelfNumber, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
   };
 
   const apiCreateDivision = async (divisionNumber) => {
-    const response = await axios.post(`${API_BASE_URL}/api/utilities/divisions`, { value: divisionNumber, createdBy: userInfo?.name }, {
+    const response = await axios.post(`${API_BASE_URL}/utilities/divisions`, { value: divisionNumber, createdBy: userInfo?.name }, {
       headers: getAuthHeaders(),
     });
     return response.data;
@@ -363,7 +363,7 @@ const InputSampleForm = () => {
     console.log(shelf, division);
     const body = { shelf: parseInt(shelf), division: parseInt(division), currentPosition: parseInt(currentPosition) }
     try {
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/increase-positions-by-shelf-division`, body);
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/increase-positions-by-shelf-division`, body);
       console.log(res);
       const data = res?.data;
       if (data?.success) {

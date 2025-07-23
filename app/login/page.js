@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     try {
       const res = await API.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
         form
       );
 

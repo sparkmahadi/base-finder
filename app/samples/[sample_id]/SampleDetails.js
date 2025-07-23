@@ -43,7 +43,7 @@ function SampleDetails() {
         setIsLoadingInitial(true);
         setErrorInitial(null);
         try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/${id}`, {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${id}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             });
             setSample(res.data);

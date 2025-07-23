@@ -81,7 +81,7 @@ export default function UploadExcel() {
     setLoading(true);
     const body = { shelf: parseInt(shelf), division: parseInt(division), amountToIncrease: parseInt(amountToIncrease) }
     try {
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/increase-positions-by-amount`, body);
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/increase-positions-by-amount`, body);
       console.log(res);
       const data = res?.data;
       if (data?.modifiedCount > 0) {
@@ -142,7 +142,7 @@ export default function UploadExcel() {
 
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/upload-excel`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/upload-excel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ samples: selected }),

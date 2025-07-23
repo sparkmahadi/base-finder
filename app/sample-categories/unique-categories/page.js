@@ -19,7 +19,7 @@ export default function CategoryUploader() {
     const fetchUniqueCategories = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/unique-category-buyers`);
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/unique-category-buyers`);
             console.log(res);
             setPairs(res?.data?.categories);
             setLoading(false);
@@ -52,7 +52,7 @@ export default function CategoryUploader() {
             return;
         }
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities/categories/bulk`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/categories/bulk`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ categories: selectedRows }),

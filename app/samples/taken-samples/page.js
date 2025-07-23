@@ -21,7 +21,7 @@ const TakenSamplesList = () => {
   const fetchSamples = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/taken-samples`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`);
       setSamples(res.data.samples);
       setLoading(false);
     } catch (err) {
@@ -33,7 +33,7 @@ const TakenSamplesList = () => {
 
   const handlePutBack = async (sampleId, newPosition) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/samples/putback/${sampleId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/putback/${sampleId}`, {
         method: "PUT",
         body: JSON.stringify({ position: newPosition, returned_by: userInfo?.username }),
         headers: { "Content-Type": "application/json" },

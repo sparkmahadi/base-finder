@@ -8,7 +8,7 @@ import Loader from "../components/Loader";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ username: "", name: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "", name: "", email: "", password: "", team: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,11 +19,16 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     setLoading(true);
     e.preventDefault();
+    if (!form.team) {
+      setError("Please select a team");
+      setLoading(false);
+      return;
+    }
     setError("");
     console.log(form);
     try {
-      const res = await API.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/register`, form);
-      setForm({ username: "", name: "", email: "", password: "" });
+      const res = await API.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register`, form);
+      setForm({ username: "", name: "", email: "", password: "", team: "" });
       toast.success(res.data.message);
       toast.info("Please login");
       router.push("/login");
@@ -70,6 +75,19 @@ export default function RegisterPage() {
           onChange={handleChange}
           className="w-full p-2 mb-4 border rounded"
         />
+
+        <select
+          name="team"
+          value={form.team}
+          onChange={handleChange}
+          className="w-full p-2 mb-4 border rounded"
+        >
+          <option value="">Select Team</option> {/* default placeholder */}
+          <option value="LPP">LPP</option>
+          <option value="Dummy">Dummy</option>
+          <option value="Dummy2">Dummy2</option>
+        </select>
+
 
         <input
           type="password"

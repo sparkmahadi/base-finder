@@ -17,6 +17,7 @@ const Users = () => {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [team, setTeam] = useState("");
   const [role, setRole] = useState("viewer");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +33,7 @@ const Users = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`
       );
       setUsers(response.data);
     } catch (err) {
@@ -49,7 +50,8 @@ const Users = () => {
     setUsername("");
     setName("");
     setEmail("");
-    setRole("viewer");
+    setTeam(""),
+      setRole("viewer");
     setPassword("");
     setCurrentUser(null);
     setShowPassword(false);
@@ -62,10 +64,11 @@ const Users = () => {
     e.preventDefault();
     const toastId = toast.loading("Creating user...");
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
         username,
         name,
         email,
+        team,
         role,
         password,
         verification, // Include new fields
@@ -97,6 +100,7 @@ const Users = () => {
     setUsername(user.username);
     setName(user.name);
     setEmail(user.email);
+    setTeam(user.team);
     setRole(user.role);
     setPassword(""); // Never pre-fill password for security
     setShowPassword(false); // Default to hidden when editing
@@ -106,61 +110,61 @@ const Users = () => {
     setShowForm(true);
   };
 
-const handleUpdateUser = async (e) => {
-  e.preventDefault();
-  if (!currentUser) return;
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    if (!currentUser) return;
 
-  const toastId = toast.loading("Updating user..."); // This creates the loading toast
+    const toastId = toast.loading("Updating user..."); // This creates the loading toast
 
-  try {
-    const updateData = { username, name, email, role, verification, approval };
-    if (password) {
-      updateData.password = password;
+    try {
+      const updateData = { username, name, email, team, role, verification, approval };
+      if (password) {
+        updateData.password = password;
+      }
+
+      // --- IMPORTANT DEBUGGING POINTS ---
+      console.log("Frontend: Sending update request with ID:", currentUser._id);
+      console.log("Frontend: Sending update data:", updateData);
+
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${currentUser._id}`,
+        updateData
+      );
+
+      // --- CRUCIAL CHECKS AFTER RESPONSE ---
+      console.log("Frontend: Received API response STATUS:", response.status); // Log the HTTP status code
+      console.log("Frontend: Received API response DATA:", response.data);   // Log the full response body
+
+      // This code *should* be executed if the response is 200 OK
+      toast.update(toastId, {
+        render: response.data.message || "User updated successfully!",
+        type: "success",
+        isLoading: false,
+        autoClose: 5000,
+      });
+      console.log("Frontend: Toast updated to SUCCESS with message:", response.data.message);
+
+      setShowForm(false);
+      resetForm();
+      fetchUsers(); // Refresh the user list
+    } catch (err) {
+      // --- THIS BLOCK IS EXECUTED ON ANY ERROR ---
+      console.error("Frontend: An error occurred during update request.");
+      console.error("Frontend: Error object:", err);
+      console.error("Frontend: Error response status:", err.response?.status); // Log error status
+      console.error("Frontend: Error response data:", err.response?.data);   // Log error data
+      console.error("Frontend: Error message (from catch):", err.message);
+
+      toast.update(toastId, {
+        render:
+          err.response?.data?.message || "Failed to update user. Please try again.",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
+      console.log("Frontend: Toast updated to ERROR with message:", err.response?.data?.message || "Default error message");
     }
-
-    // --- IMPORTANT DEBUGGING POINTS ---
-    console.log("Frontend: Sending update request with ID:", currentUser._id);
-    console.log("Frontend: Sending update data:", updateData);
-
-    const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${currentUser._id}`,
-      updateData
-    );
-
-    // --- CRUCIAL CHECKS AFTER RESPONSE ---
-    console.log("Frontend: Received API response STATUS:", response.status); // Log the HTTP status code
-    console.log("Frontend: Received API response DATA:", response.data);   // Log the full response body
-
-    // This code *should* be executed if the response is 200 OK
-    toast.update(toastId, {
-      render: response.data.message || "User updated successfully!",
-      type: "success",
-      isLoading: false,
-      autoClose: 5000,
-    });
-    console.log("Frontend: Toast updated to SUCCESS with message:", response.data.message);
-
-    setShowForm(false);
-    resetForm();
-    fetchUsers(); // Refresh the user list
-  } catch (err) {
-    // --- THIS BLOCK IS EXECUTED ON ANY ERROR ---
-    console.error("Frontend: An error occurred during update request.");
-    console.error("Frontend: Error object:", err);
-    console.error("Frontend: Error response status:", err.response?.status); // Log error status
-    console.error("Frontend: Error response data:", err.response?.data);   // Log error data
-    console.error("Frontend: Error message (from catch):", err.message);
-
-    toast.update(toastId, {
-      render:
-        err.response?.data?.message || "Failed to update user. Please try again.",
-      type: "error",
-      isLoading: false,
-      autoClose: 5000,
-    });
-    console.log("Frontend: Toast updated to ERROR with message:", err.response?.data?.message || "Default error message");
-  }
-};
+  };
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) {
@@ -169,7 +173,7 @@ const handleUpdateUser = async (e) => {
     const toastId = toast.loading("Deleting user...");
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${userId}`
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`
       );
       toast.update(toastId, {
         render: "User deleted successfully!",
@@ -261,6 +265,20 @@ const handleUpdateUser = async (e) => {
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-2 focus:ring-blue-500"
               />
             </div>
+
+            <select
+              name="team"
+              value={team}
+              onChange={(e) => setTeam(e.target.value)}
+              className="w-full p-2 mb-4 border rounded"
+            >
+              <option value="">Select Team</option> {/* default placeholder */}
+              <option value="LPP">LPP</option>
+              <option value="Dummy">Dummy</option>
+              <option value="Dummy2">Dummy2</option>
+            </select>
+
+
             {/* Role */}
             <div className="mb-4">
               <label htmlFor="role" className="block text-gray-700 text-sm font-bold mb-2">
@@ -369,6 +387,8 @@ const handleUpdateUser = async (e) => {
               <span className="text-gray-600">({user.username})</span> -{" "}
               <span className="text-blue-600">{user.email}</span> - Role:{" "}
               <span className="font-semibold text-purple-700">{user.role}</span>
+              <span className="text-blue-600"></span> - Team:{" "}
+              <span className="font-semibold text-purple-700">{user.team}</span>
               <br />
               <small className="text-gray-500 text-sm">
                 Created: {new Date(user.createdAt).toLocaleDateString()}

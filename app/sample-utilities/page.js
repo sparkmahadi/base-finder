@@ -5,10 +5,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Loader from '../components/Loader';
 
-// --- Mock API Base URL and Auth Headers ---
-// IMPORTANT: Ensure NEXT_PUBLIC_API_BASE_URL is correctly set in your .env.local file
-// e.g., NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
-const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utilities`;
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities`;
 
 const getAuthHeaders = () => {
   return {}; // Placeholder for actual auth headers (e.g., { Authorization: `Bearer ${token}` })

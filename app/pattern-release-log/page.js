@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import Loader from "../components/Loader";
 import { format } from "date-fns";
+import DownloadButton from "./DownloadButton";
 
 const PatternReleaseLog = () => {
     const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}`;
@@ -391,7 +392,7 @@ const PatternReleaseLog = () => {
                     />
                 </div>
 
-                <div className="mb-6 text-right">
+                <div className="mb-6 text-right lg:flex gap-5 justify-end">
                     <button
                         onClick={() => {
                             setShowAddForm(!showAddForm);
@@ -403,7 +404,11 @@ const PatternReleaseLog = () => {
                     >
                         {showAddForm ? "Hide Form" : "Add New Log"}
                     </button>
+                    {
+                        userInfo?.role === "admin" && <DownloadButton data={logs} />
+                    }
                 </div>
+
 
                 {showAddForm && (
                     <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">

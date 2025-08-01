@@ -20,21 +20,21 @@ const PatternReleaseLog = () => {
     }, []);
 
     const apiFetchCategories = async () => {
-        const response = await axios.get(`${API_BASE_URL}/api/utilities/categories`, {
+        const response = await axios.get(`${API_BASE_URL}/utilities/categories`, {
             headers: getAuthHeaders(),
         });
         return response.data.data.map(item => item.cat_name);
     };
 
     const apiFetchBuyers = async () => {
-        const response = await axios.get(`${API_BASE_URL}/api/utilities/buyers`, {
+        const response = await axios.get(`${API_BASE_URL}/utilities/buyers`, {
             headers: getAuthHeaders(),
         });
         return response.data.data.map(item => item.value);
     };
 
     const apiFetchStatuses = async () => {
-        const response = await axios.get(`${API_BASE_URL}/api/utilities/statuses`, {
+        const response = await axios.get(`${API_BASE_URL}/utilities/statuses`, {
             headers: getAuthHeaders(),
         });
         return response.data.data.map(item => item.value);
@@ -60,6 +60,7 @@ const PatternReleaseLog = () => {
         body: "",
         size: "",
         status: "",
+        comments: "",
     });
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -86,7 +87,7 @@ const PatternReleaseLog = () => {
         const loadInitialData = async () => {
             setLoading(true);
             try {
-                const logsResponse = await axios.get(`${API_BASE_URL}/api/pattern-release-logs`);
+                const logsResponse = await axios.get(`${API_BASE_URL}/pattern-release-logs`);
                 const sortedByDateDesc = logsResponse?.data.sort((a, b) => new Date(b.date) - new Date(a.date));
                 setLogs(sortedByDateDesc);
 
@@ -170,6 +171,7 @@ const PatternReleaseLog = () => {
             body: "",
             size: "",
             status: "",
+            comments: "",
         });
         setShowCustomBuyerInput(false);
         setShowCustomCategoryInput(false);
@@ -177,27 +179,64 @@ const PatternReleaseLog = () => {
     };
 
     // Function to add a new option to its respective list if it's a new custom value
-    const addNewOption = (optionType, value) => {
-        if (!value) return; // Don't add empty values
+    // const addNewOption = (optionType, value) => {
+    //     if (!value) return; // Don't add empty values
 
-        let setOptions;
-        let options;
+    //     let setOptions;
+    //     let options;
+
+    //     if (optionType === "buyer") {
+    //         setOptions = setBuyerOptions;
+    //         options = buyerOptions;
+    //     } else if (optionType === "category") {
+    //         setOptions = setCategoryOptions;
+    //         options = categoryOptions;
+    //     } else if (optionType === "status") {
+    //         setOptions = setStatusOptions;
+    //         options = statusOptions;
+    //     }
+
+    //     if (setOptions && value && !options.includes(value)) {
+    //         setOptions((prev) => [...prev, value].sort());
+    //     }
+    // };
+
+    const addNewOption = async (optionType, value) => {
+        if (!value) return;
+
+        let setOptions, options, endpoint;
 
         if (optionType === "buyer") {
             setOptions = setBuyerOptions;
             options = buyerOptions;
+            endpoint = "buyers";
         } else if (optionType === "category") {
             setOptions = setCategoryOptions;
             options = categoryOptions;
+            endpoint = "categories";
         } else if (optionType === "status") {
             setOptions = setStatusOptions;
             options = statusOptions;
+            endpoint = "statuses";
         }
 
-        if (setOptions && value && !options.includes(value)) {
+        if (!options.includes(value)) {
             setOptions((prev) => [...prev, value].sort());
+
+            try {
+                await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+                    value, createdBy: userInfo?.username
+                }, {
+                    headers: getAuthHeaders(),
+                });
+                console.log(`Saved new ${optionType}: ${value}`);
+            } catch (err) {
+                console.error(`Error saving ${optionType}:`, err);
+                toast.error(`Failed to save new ${optionType} to database.`);
+            }
         }
     };
+
 
     // Adds a new log entry via API
     const addLog = async () => {
@@ -207,20 +246,21 @@ const PatternReleaseLog = () => {
         }
 
         // Ensure custom values are added to the options list before submission
-        addNewOption("buyer", formInput.buyer);
-        addNewOption("category", formInput.item);
-        addNewOption("status", formInput.status);
+        await addNewOption("buyer", formInput.buyer);
+        await addNewOption("category", formInput.item);
+        await addNewOption("status", formInput.status);
+
 
         const payload = { ...formInput, added_by: userInfo?.username, added_at: new Date() }
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE_URL}/api/pattern-release-logs`, payload);
+            const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
             setLogs((prev) => [...prev, response.data]);
             resetForm();
             toast.success("Log added successfully!");
             setShowAddForm(false);
         } catch (error) {
-                if (error.response && error.response.status === 409) {
+            if (error.response && error.response.status === 409) {
                 toast.error("A log with the same Date, Buyer, Style, Item, Body, and Size already exists.");
             } else {
                 console.error("Error adding log:", error);
@@ -246,7 +286,8 @@ const PatternReleaseLog = () => {
         setShowCustomCategoryInput(false);
         setShowCustomStatusInput(false);
 
-        setFormInput({ ...log, date: formattedDate });
+        setFormInput({ ...log, date: formattedDate, comments: log.comments || "" });
+
         setShowAddForm(true);
     };
 
@@ -258,15 +299,16 @@ const PatternReleaseLog = () => {
         }
 
         // Ensure custom values are added to the options list before submission
-        addNewOption("buyer", formInput.buyer);
-        addNewOption("category", formInput.item);
-        addNewOption("status", formInput.status);
+        await addNewOption("buyer", formInput.buyer);
+        await addNewOption("category", formInput.item);
+        await addNewOption("status", formInput.status);
+
 
         setLoading(true);
 
         const payload = { ...formInput, updated_by: userInfo?.username, last_updated_at: new Date() }
         try {
-            const response = await axios.put(`${API_BASE_URL}/api/pattern-release-logs/${editingLogId}`, payload);
+            const response = await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload);
             setLogs((prev) =>
                 prev.map((log) =>
                     log?._id === editingLogId ? response.data : log
@@ -303,7 +345,7 @@ const PatternReleaseLog = () => {
 
         setLoading(true);
         try {
-            await axios.delete(`${API_BASE_URL}/api/pattern-release-logs/${idToDelete}`);
+            await axios.delete(`${API_BASE_URL}/pattern-release-logs/${idToDelete}`);
             setLogs((prev) => prev.filter((log) => log?._id !== idToDelete));
             if (editingLogId === idToDelete) {
                 cancelEditing();
@@ -405,7 +447,6 @@ const PatternReleaseLog = () => {
                                         type="text"
                                         value={formInput.buyer}
                                         onChange={(e) => handleCustomInputChange(e, "buyer")}
-                                        onBlur={(e) => addNewOption("buyer", e.target.value)} // Add on blur
                                         placeholder="Enter New Buyer"
                                         className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
                                     />
@@ -448,7 +489,6 @@ const PatternReleaseLog = () => {
                                         type="text"
                                         value={formInput.item}
                                         onChange={(e) => handleCustomInputChange(e, "item")}
-                                        onBlur={(e) => addNewOption("category", e.target.value)}
                                         placeholder="Enter New Category"
                                         className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
                                     />
@@ -505,12 +545,28 @@ const PatternReleaseLog = () => {
                                         type="text"
                                         value={formInput.status}
                                         onChange={(e) => handleCustomInputChange(e, "status")}
-                                        onBlur={(e) => addNewOption("status", e.target.value)}
                                         placeholder="Enter New Status"
                                         className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
                                     />
                                 )}
                             </div>
+
+
+                            {/* Comments */}
+                            <div className="sm:col-span-2 lg:col-span-4">
+                                <label htmlFor="comments" className="block text-sm font-medium text-gray-700">Comments</label>
+                                <textarea
+                                    id="comments"
+                                    name="comments"
+                                    rows={2}
+                                    value={formInput.comments}
+                                    onChange={handleChange}
+                                    placeholder="Any remarks or notes"
+                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                />
+                            </div>
+
+
                         </div>
                         <div className="flex justify-end space-x-3">
                             {editingLogId ? (
@@ -566,6 +622,9 @@ const PatternReleaseLog = () => {
                                     Status
                                 </th>
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Comments
+                                </th>
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Added By
                                 </th>
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -601,6 +660,13 @@ const PatternReleaseLog = () => {
                                         <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.status}
                                         </td>
+                                        <td
+                                            className="px-3 py-3 text-sm text-gray-800 max-w-xs truncate"
+                                            title={log?.comments || "-"} // Shows full comment on hover
+                                        >
+                                            {log?.comments?.length > 50 ? `${log.comments.slice(0, 50)}...` : (log?.comments || "-")}
+                                        </td>
+
                                         <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.added_by}
                                         </td>

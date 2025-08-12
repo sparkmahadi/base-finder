@@ -383,7 +383,7 @@ const InputSampleForm = () => {
   }
 
   // --- Submission Handler ---
-const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -398,7 +398,7 @@ const handleSubmit = useCallback(async (e) => {
       if (!formData.sample_date) { toast.error("Please select a sample date."); setLoading(false); return; }
 
       // check the position number by shelf and division and shift samples down greater than that
-      const samplesShift = await handleIncreasePositions(formData.shelf, formData.division, (parseInt(formData.position)-1));
+      const samplesShift = await handleIncreasePositions(formData.shelf, formData.division, (parseInt(formData.position) - 1));
 
       // Continue only if samplesShift is true (meaning positions were successfully shifted or no shift was needed)
       if (samplesShift) {
@@ -581,18 +581,21 @@ const handleSubmit = useCallback(async (e) => {
                     {buyer.value || buyer}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCustomBuyerInput(true);
-                    setFormData(prev => ({ ...prev, buyer: "" })); // Clear buyer when switching
-                  }}
-                  className={`p-3 rounded-lg border-2 transition-all duration-200 ease-in-out
+                {
+                  userInfo.role === "admin" &&
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomBuyerInput(true);
+                      setFormData(prev => ({ ...prev, buyer: "" })); // Clear buyer when switching
+                    }}
+                    className={`p-3 rounded-lg border-2 transition-all duration-200 ease-in-out
                                           ${showCustomBuyerInput ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md' : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'}
                                           text-sm font-medium`}
-                >
-                  Add New Buyer
-                </button>
+                  >
+                    Add New Buyer
+                  </button>
+                }
               </div>
 
               {showCustomBuyerInput && (

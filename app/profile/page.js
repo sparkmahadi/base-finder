@@ -45,6 +45,11 @@ export default function Profile() {
       </div>
 
       <div className="mb-4">
+        <h3 className="font-medium text-lg">Team</h3>
+        <p>{userInfo?.team || "No full name available"}</p>
+      </div>
+
+      <div className="mb-4">
         <h3 className="font-medium text-lg">Role</h3>
         <p>{userInfo?.role || "No role assigned"}</p>
       </div>

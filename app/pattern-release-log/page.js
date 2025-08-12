@@ -165,13 +165,10 @@ const PatternReleaseLog = () => {
     // Resets the form and custom input states
     const resetForm = () => {
         setFormInput({
-            date: getTodayDate(), // Reset to today's date
-            buyer: "",
+            date: getTodayDate(),
             style: "",
-            item: "",
             body: "",
             size: "",
-            status: "",
             comments: "",
         });
         setShowCustomBuyerInput(false);

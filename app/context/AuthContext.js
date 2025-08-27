@@ -20,15 +20,27 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-const login = async () => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    setIsAuthenticated(true);
-    await getUserInfo(token); // <-- Fetch and set userInfo
-  }
-};
+  const login = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+      await getUserInfo(token); // <-- Fetch and set userInfo
+    }
+  };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = localStorage.getItem("token");
+    const data = await API.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/activities`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      message: `${userInfo?.username}, was logged out`
+    });
+    console.log(data);
+
+    if (!data?.success) {
+      toast.error("Error occured in activity while logging out")
+    }
     localStorage.removeItem("token");
     setIsAuthenticated(false);
     setUserInfo(null); // Reset user info on logout

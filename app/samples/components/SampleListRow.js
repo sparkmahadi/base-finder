@@ -154,7 +154,7 @@ const SampleListRow = ({
               </button>
             )}
             <button
-              onClick={() => router.push(`/samples/${sample.sample_id}`)}
+              onClick={() => router.push(`/samples/${sample._id}`)}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               Details

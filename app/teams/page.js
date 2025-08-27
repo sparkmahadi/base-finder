@@ -5,11 +5,13 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 
 export default function TeamsManager() {
-  const API_URL = "http://localhost:5000/api/v2/teams";
-  const USERS_API_URL = "http://localhost:5000/api/v2/users"; // Adjust to your users API
-  const BUYERS_API_URL = "http://localhost:5000/api/v2/utilities/buyers";
+  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_URL = `${BASE_URL}/teams`;
+  const USERS_API_URL = `${BASE_URL}/users`; // Adjust to your users API
+  const BUYERS_API_URL = `${BASE_URL}/utilities/buyers`;
+  const authToken = { Authorization: `Bearer ${localStorage.getItem("token")}` };
 
-    const router = useRouter();
+  const router = useRouter();
 
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
@@ -28,7 +30,7 @@ export default function TeamsManager() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.get(API_URL);
+      const { data } = await axios.get(API_URL, {headers: authToken});
       setTeams(data.data || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -39,7 +41,7 @@ export default function TeamsManager() {
   // Fetch users for selection
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get(USERS_API_URL);
+      const { data } = await axios.get(USERS_API_URL, {headers: authToken});
       setUsers(data || []);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -49,7 +51,7 @@ export default function TeamsManager() {
   // Fetch buyers for selection
   const fetchBuyers = async () => {
     try {
-      const { data } = await axios.get(BUYERS_API_URL);
+      const { data } = await axios.get(BUYERS_API_URL, {headers: authToken});
       console.log(data);
       setBuyers(data.data || []);
     } catch (err) {
@@ -208,15 +210,13 @@ export default function TeamsManager() {
                   type="button"
                   onClick={() => toggleBuyer(buyer.value)}
                   disabled={loading}
-                  className={`text-left p-2 rounded border ${
-                    isSelected
+                  className={`text-left p-2 rounded border ${isSelected
                       ? "bg-green-300 border-green-500"
                       : "hover:bg-blue-100 border-gray-300"
-                  }`}
+                    }`}
                   aria-pressed={isSelected}
-                  aria-label={`${isSelected ? "Deselect" : "Select"} buyer ${
-                    buyer.value
-                  }`}
+                  aria-label={`${isSelected ? "Deselect" : "Select"} buyer ${buyer.value
+                    }`}
                 >
                   {buyer.value}
                 </button>
@@ -240,11 +240,10 @@ export default function TeamsManager() {
                   type="button"
                   disabled={loading || isAdded}
                   onClick={() => addMember(user)}
-                  className={`text-left p-2 rounded border ${
-                    isAdded
+                  className={`text-left p-2 rounded border ${isAdded
                       ? "bg-green-200 border-green-400 cursor-not-allowed"
                       : "hover:bg-blue-100 border-gray-300"
-                  }`}
+                    }`}
                   title={isAdded ? "Already added" : "Add member"}
                 >
                   {user.username} ({user.email || user._id})

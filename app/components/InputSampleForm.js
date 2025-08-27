@@ -134,6 +134,7 @@ const InputSampleForm = () => {
     comments: "",
     added_at: new Date().toISOString(),
     buyer: "",
+    team: userInfo?.team,
     released: ""
   };
 

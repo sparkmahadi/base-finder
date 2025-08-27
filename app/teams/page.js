@@ -9,7 +9,7 @@ export default function TeamsManager() {
   const API_URL = `${BASE_URL}/teams`;
   const USERS_API_URL = `${BASE_URL}/users`; // Adjust to your users API
   const BUYERS_API_URL = `${BASE_URL}/utilities/buyers`;
-  const authToken = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  // const authToken = { Authorization: `Bearer ${localStorage.getItem("token")}` };
 
   const router = useRouter();
 
@@ -25,12 +25,20 @@ export default function TeamsManager() {
     members: [], // will contain objects like { user_id, username, role }
   });
 
+  const getAuthToken = () => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : null;
+  }
+  return null;
+};
+
   // Fetch teams
   const fetchTeams = async () => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.get(API_URL, {headers: authToken});
+      const { data } = await axios.get(API_URL, {headers: getAuthToken()});
       setTeams(data.data || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -41,7 +49,7 @@ export default function TeamsManager() {
   // Fetch users for selection
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get(USERS_API_URL, {headers: authToken});
+      const { data } = await axios.get(USERS_API_URL, {headers: getAuthToken()});
       setUsers(data || []);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -51,7 +59,7 @@ export default function TeamsManager() {
   // Fetch buyers for selection
   const fetchBuyers = async () => {
     try {
-      const { data } = await axios.get(BUYERS_API_URL, {headers: authToken});
+      const { data } = await axios.get(BUYERS_API_URL, {headers: getAuthToken()});
       console.log(data);
       setBuyers(data.data || []);
     } catch (err) {

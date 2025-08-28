@@ -8,6 +8,7 @@ import TeamDetails from "@/app/components/TeamDetails"; // adjust path as needed
 export default function TeamPage() {
     const { team_id: teamId } = useParams();
     const router = useRouter();
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     const [team, setTeam] = useState(null);
     const [usersList, setUsersList] = useState(null);
@@ -23,9 +24,9 @@ export default function TeamPage() {
             setError("");
             try {
                 const [teamRes, buyersRes, usersRes] = await Promise.all([
-                    axios.get(`http://localhost:5000/api/v2/teams/${teamId}`),
-                    axios.get("http://localhost:5000/api/v2/utilities/buyers"),
-                    axios.get("http://localhost:5000/api/v2/users"),
+                    axios.get(`${API_BASE_URL}/teams/${teamId}`),
+                    axios.get(`${API_BASE_URL}/utilities/buyers`),
+                    axios.get(`${API_BASE_URL}/users`),
                 ]);
                 setTeam(teamRes.data.data);
                 setBuyersList(buyersRes.data.data || []);
@@ -40,8 +41,8 @@ export default function TeamPage() {
 
     const handleUpdate = async (updatedData) => {
         try {
-            await axios.put(`http://localhost:5000/api/v2/teams/${teamId}`, updatedData);
-            const { data } = await axios.get(`http://localhost:5000/api/v2/teams/${teamId}`);
+            await axios.put(`${API_BASE_URL}/teams/${teamId}`, updatedData);
+            const { data } = await axios.get(`${API_BASE_URL}/teams/${teamId}`);
             setTeam(data.data);
             alert("Team updated successfully!");
         } catch (err) {

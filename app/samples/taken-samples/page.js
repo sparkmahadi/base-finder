@@ -63,6 +63,7 @@ const TakenSamplesList = () => {
     "Division",
     "Position",
     "Last Taken At",
+    "Last Purpose",
     "Last Taken By",
     "Actions",
   ];

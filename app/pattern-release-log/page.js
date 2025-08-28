@@ -253,7 +253,7 @@ const PatternReleaseLog = () => {
         setLoading(true);
         try {
             const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
-            setLogs((prev) => [...prev, response.data]);
+            setLogs((prev) => [response.data, ...prev]);
             resetForm();
             toast.success("Log added successfully!");
             setShowAddForm(false);
@@ -335,6 +335,10 @@ const PatternReleaseLog = () => {
         setShowAddForm(false);
     };
 
+    const handleClearSearch = () =>{
+        setSearchTerm("");
+    }
+
     // Deletes a log entry via API
     const deleteLog = async (idToDelete) => {
         if (!window.confirm("Are you sure you want to delete this log entry permanently?")) {
@@ -379,7 +383,7 @@ const PatternReleaseLog = () => {
                     <Loader />
                 )}
 
-                <div className="mb-6">
+                <div className="mb-6 flex gap-5">
                     <input
                         type="text"
                         placeholder="Search by any field..."
@@ -387,6 +391,9 @@ const PatternReleaseLog = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    <button className="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
+                    onClick={handleClearSearch}
+                    >Clear</button>
                 </div>
 
                 <div className="mb-6 text-right lg:flex gap-5 justify-end">

@@ -61,6 +61,7 @@ const TakenSampleListRow = ({ sample, index, handlePutBack, userRole, handleDele
         {renderTd(sample?.division)}
         {renderTd(sample?.position)}
         {renderTd(sample?.last_taken_at ? format(new Date(sample.last_taken_at), 'PPp') : '--')}
+        {renderTd(sample?.last_purpose)}
         {renderTd(sample?.last_taken_by)}
 
         <td className="py-3 px-3 border border-gray-200">

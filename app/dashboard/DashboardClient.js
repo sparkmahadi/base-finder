@@ -95,6 +95,12 @@ const DashboardClient = ({
       link: '/samples/cabinet/',
       value: 'N/A',
     },
+    {
+      title: "Activities",
+      icon: <PenToolIcon className="h-6 w-6 text-purple-500" />,
+      link: '/activities/',
+      value: 'N/A',
+    },
   ];
 
   // No explicit loader return needed here for initial load as data comes via props.

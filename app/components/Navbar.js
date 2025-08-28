@@ -55,14 +55,14 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-blue-600 shadow-md px-6 py-4">
+    <nav className="bg-gray-700 shadow-md px-6 py-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <div
           className="text-white font-extrabold text-2xl cursor-pointer tracking-wide"
           onClick={() => router.push("/")}
         >
-          BaseFinder
+          BaseFinder V2
         </div>
 
         {/* Desktop Navigation */}

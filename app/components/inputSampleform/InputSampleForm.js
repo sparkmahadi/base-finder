@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/AuthContext";
-import Loader from "./Loader";
+import { useAuth } from "../../context/AuthContext";
+import Loader from "../Loader";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Styles for date picker
 
@@ -324,6 +324,14 @@ const InputSampleForm = () => {
     setCurrentStep((prev) => prev - 1);
   };
 
+  const getAuthToken = () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      return token ? { Authorization: `Bearer ${token}` } : null;
+    }
+    return null;
+  };
+
   // Jump to a specific step with validation
   const goToStep = useCallback((step) => {
     // Prevent jumping forward to uncompleted steps
@@ -364,7 +372,7 @@ const InputSampleForm = () => {
     console.log(shelf, division);
     const body = { shelf: parseInt(shelf), division: parseInt(division), currentPosition: parseInt(currentPosition) }
     try {
-      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/increase-positions-by-shelf-division`, body);
+      const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/increase-positions-by-shelf-division`, body, { headers: getAuthToken() });
       console.log(res);
       const data = res?.data;
       if (data?.success) {

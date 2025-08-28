@@ -1,10 +1,10 @@
-import InputSampleForm from '@/app/components/InputSampleForm';
+import SampleFormWrapper from '@/app/components/inputSampleform/SampleFormWrapper';
 import React from 'react';
 
 const AddSampleNew = () => {
     return (
         <div>
-            <InputSampleForm/>
+            <SampleFormWrapper/>
         </div>
     );
 };

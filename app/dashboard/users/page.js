@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const Users = () => {
   const { isAuthenticated, userInfo } = useAuth();
   const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -27,6 +28,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchTeams();
   }, []);
 
   const fetchUsers = async () => {
@@ -44,6 +46,29 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAuthToken = () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      return token ? { Authorization: `Bearer ${token}` } : null;
+    }
+    return null;
+  };
+
+  const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_URL = `${BASE_URL}/teams`;
+
+  // Fetch teams
+  const fetchTeams = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(API_URL, { headers: getAuthToken() });
+      setTeams(data.data || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
+    }
+    setLoading(false);
   };
 
   const resetForm = () => {
@@ -266,17 +291,21 @@ const Users = () => {
               />
             </div>
 
-            <select
-              name="team"
-              value={team}
-              onChange={(e) => setTeam(e.target.value)}
-              className="w-full p-2 mb-4 border rounded"
-            >
-              <option value="">Select Team</option> {/* default placeholder */}
-              <option value="LPP">LPP</option>
-              <option value="Dummy">Dummy</option>
-              <option value="Dummy2">Dummy2</option>
-            </select>
+            {/* Team */}
+            <div className="mb-4">
+              <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+                Team:
+              </label>
+              <select
+                name="team"
+                value={team}
+                onChange={(e) => setTeam(e.target.value)}
+                className="w-full p-2 mb-4 border rounded"
+              >
+                <option value="">Select Team</option> {/* default placeholder */}
+                {teams?.map(team => <option key={team._id} value={team?.team_name}>{team?.team_name}</option>)}
+              </select>
+            </div>
 
 
             {/* Role */}

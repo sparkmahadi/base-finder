@@ -68,6 +68,53 @@ const PatternReleaseLog = () => {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
 
+    // Add these in your state section
+    // const [buyerFilter, setBuyerFilter] = useState("");
+    // const [statusFilter, setStatusFilter] = useState("");
+    // const [categoryFilter, setCategoryFilter] = useState("");
+    // const [showOnlyMine, setShowOnlyMine] = useState(false);
+
+    // Add this state
+    const [filters, setFilters] = useState({
+        date: "",
+        buyer: "",
+        style: "",
+        category: "",
+        body: "",
+        size: "",
+        status: "",
+        team: "",
+        comments: "",
+        added_by: "",
+        added_at: ""
+    });
+    const [showOnlyMine, setShowOnlyMine] = useState(true);
+
+    const clearFilters = () => {
+        setFilters({
+            date: "",
+            buyer: "",
+            style: "",
+            category: "",
+            body: "",
+            size: "",
+            status: "",
+            team: "",
+            comments: "",
+            added_by: "",
+            added_at: ""
+        });
+        setSearchTerm("");
+    };
+
+    const getUniqueOptions = (key) => {
+        const values = logs.map((log) => log[key]).filter(Boolean);
+        return [...new Set(values)];
+    };
+
+
+
+
     const [buyerOptions, setBuyerOptions] = useState([]);
     const [categoryOptions, setCategoryOptions] = useState([]);
     const [statusOptions, setStatusOptions] = useState([]);
@@ -88,7 +135,9 @@ const PatternReleaseLog = () => {
         const loadInitialData = async () => {
             setLoading(true);
             try {
-                const logsResponse = await axios.get(`${API_BASE_URL}/pattern-release-logs`);
+                const logsResponse = await axios.get(`${API_BASE_URL}/pattern-release-logs`, {
+                    headers: getAuthHeaders(),
+                });
                 const sortedByDateDesc = logsResponse?.data.sort((a, b) => new Date(b.date) - new Date(a.date));
                 setLogs(sortedByDateDesc);
 
@@ -249,7 +298,7 @@ const PatternReleaseLog = () => {
         await addNewOption("status", formInput.status);
 
 
-        const payload = { ...formInput, added_by: userInfo?.username, added_at: new Date() }
+        const payload = { ...formInput, added_by: userInfo?.username, user_team: userInfo?.team, added_at: new Date() }
         setLoading(true);
         try {
             const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
@@ -335,7 +384,7 @@ const PatternReleaseLog = () => {
         setShowAddForm(false);
     };
 
-    const handleClearSearch = () =>{
+    const handleClearSearch = () => {
         setSearchTerm("");
     }
 
@@ -362,13 +411,32 @@ const PatternReleaseLog = () => {
     };
 
     // Filters logs based on the search term
-    const filteredLogs = logs.filter((log) =>
-        Object.values(log).some(
+    // const filteredLogs = logs.filter((log) =>
+    //     Object.values(log).some(
+    //         (value) =>
+    //             typeof value === "string" &&
+    //             value.toLowerCase().includes(searchTerm.toLowerCase())
+    //     )
+    // );
+
+    const filteredLogs = logs.filter((log) => {
+        const matchesSearch = Object.values(log).some(
             (value) =>
                 typeof value === "string" &&
                 value.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+        );
+
+        const matchesFilters = Object.entries(filters).every(([key, val]) =>
+            val ? log[key] === val : true
+        );
+
+        const matchesMine = showOnlyMine ? log?.added_by === userInfo?.username : true;
+
+        return matchesSearch && matchesFilters && matchesMine;
+    });
+
+
+
 
     console.log(filteredLogs);
 
@@ -387,13 +455,19 @@ const PatternReleaseLog = () => {
                     <input
                         type="text"
                         placeholder="Search by any field..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
+                        className="w-2/3 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <button className="px-5 py-2 bg-gray-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
-                    onClick={handleClearSearch}
-                    >Clear</button>
+                    <button className="px-5 py-2 w-1/6 bg-gray-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
+                        onClick={handleClearSearch}
+                    >Clear Search</button>
+                    <button
+                        onClick={clearFilters}
+                        className="px-4 py-2 w-1/6 bg-teal-700 text-white rounded-md shadow hover:bg-red-600 transition"
+                    >
+                        Clear Filters
+                    </button>
                 </div>
 
                 <div className="mb-6 text-right lg:flex gap-5 justify-end">
@@ -407,6 +481,24 @@ const PatternReleaseLog = () => {
                         className="px-5 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
                     >
                         {showAddForm ? "Hide Form" : "Add New Log"}
+                    </button>
+
+                    {/* Toggle slider*/}
+                    <button
+                        onClick={() => setShowOnlyMine((prev) => !prev)}
+                        className={`relative inline-flex items-center h-8 w-36 rounded-full p-1 transition-colors duration-300 ${showOnlyMine ? "bg-green-600" : "bg-gray-400"
+                            }`}
+                    >
+                        <span
+                            className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${showOnlyMine ? "translate-x-28" : "translate-x-0"
+                                }`}
+                        />
+                        <span
+                            className={`ml-8 text-sm font-medium transition-colors duration-300 ${showOnlyMine ? "text-white" : "text-gray-800"
+                                }`}
+                        >
+                            {showOnlyMine ? "My Patterns" : "All Patterns"}
+                        </span>
                     </button>
                     {
                         userInfo?.role === "admin" && <DownloadButton data={logs} />
@@ -606,8 +698,11 @@ const PatternReleaseLog = () => {
                 )}
 
                 <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
+
+
                             <tr>
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Date
@@ -631,6 +726,9 @@ const PatternReleaseLog = () => {
                                     Status
                                 </th>
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Team
+                                </th>
+                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Comments
                                 </th>
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -642,6 +740,28 @@ const PatternReleaseLog = () => {
                                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
+                            </tr>
+
+                            {/* filtering row */}
+                            <tr className="bg-white">
+                                {Object.keys(filters).map((key) => (
+                                    <th key={key} className="px-3 py-1">
+                                        <select
+                                            value={filters[key]}
+                                            onChange={(e) =>
+                                                setFilters({ ...filters, [key]: e.target.value })
+                                            }
+                                            className="w-full px-2 py-1 border rounded text-sm"
+                                        >
+                                            <option value="">All</option>
+                                            {getUniqueOptions(key).map((val) => (
+                                                <option key={val} value={val}>
+                                                    {val}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </th>
+                                ))}
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -668,6 +788,9 @@ const PatternReleaseLog = () => {
                                         </td>
                                         <td className="px-3 py-3 text-sm text-gray-800">
                                             {log?.status}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-gray-800">
+                                            {log?.user_team}
                                         </td>
                                         <td
                                             className="px-3 py-3 text-sm text-gray-800 max-w-xs truncate"

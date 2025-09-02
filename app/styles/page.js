@@ -30,9 +30,10 @@ export default function Styles() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v2/styles`, {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles`, {
           headers: getAuthHeaders(),
         });
+        console.log(res.data.data)
         setData(res.data.data);
         setFilteredData(res.data.data);
       } catch (error) {
@@ -81,9 +82,6 @@ export default function Styles() {
     return <p className="text-center text-gray-500">Loading...</p>;
   }
 
-  if (!filteredData || filteredData.length === 0) {
-    return <p className="text-center text-red-500">No records found.</p>;
-  }
 
   // Extract unique values for dropdown filters
   const getUniqueValues = (field) => {
@@ -171,6 +169,7 @@ export default function Styles() {
       <table className="w-full border border-gray-300 text-left">
         <thead>
           <tr className="bg-gray-200">
+            <th className="border p-2">SL</th>
             <th className="border p-2">Buyer</th>
             <th className="border p-2">Season</th>
             <th className="border p-2">Style</th>
@@ -181,8 +180,9 @@ export default function Styles() {
           </tr>
         </thead>
         <tbody>
-          {filteredData.map((item) => (
+          {filteredData.map((item, idx) => (
             <tr key={item._id.$oid || item._id} className="hover:bg-gray-100">
+              <td className="border p-2">{idx+1}</td>
               <td className="border p-2">{item.buyer}</td>
               <td className="border p-2">{item.season}</td>
               <td className="border p-2">{item.style}</td>
@@ -207,7 +207,7 @@ export default function Styles() {
           ))}
         </tbody>
       </table>
-
+      <button onClick={()=> router.push('/styles/create-style')}>Create Style</button>
     </div>
   );
 }

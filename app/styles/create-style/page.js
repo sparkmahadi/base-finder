@@ -1,10 +1,13 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // <-- change to your API
 
 export default function StyleBasicForm() {
+
+  const router = useRouter();
   const [formData, setFormData] = useState({
     buyer: "",
     season: "",
@@ -310,6 +313,8 @@ export default function StyleBasicForm() {
           </button>
         </div>
       </form>
+
+      <button onClick={()=>router.push('/styles/create-style/excel-upload')}>Upload Excel</button>
     </div>
   );
 }

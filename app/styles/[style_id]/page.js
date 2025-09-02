@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 
 const StyleDetails = () => {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { style_id } = useParams();
   const router = useRouter();
   const [style, setStyle] = useState(null);
@@ -32,7 +33,7 @@ const StyleDetails = () => {
     const fetchStyle = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/v2/styles/${style_id}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/${style_id}`,
           { headers: getAuthHeaders() }
         );
         const styleInfo = res.data.data;
@@ -79,7 +80,7 @@ const StyleDetails = () => {
       };
 
       await axios.put(
-        `http://localhost:5000/api/v2/styles/${style_id}`,
+        `${API_BASE_URL}/styles/${style_id}`,
         payload,
         { headers: getAuthHeaders() }
       );

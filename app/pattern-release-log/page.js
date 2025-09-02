@@ -326,6 +326,7 @@ const PatternReleaseLog = () => {
                         userInfo={userInfo}
                     />
                 )}
+                
                 <LogTable
                     filteredLogs={filteredLogs}
                     filters={filters}

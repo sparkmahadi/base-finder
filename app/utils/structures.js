@@ -42,8 +42,3 @@ import { useCallback } from "react";
   ];
 
   export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  export const getAuthHeaders = useCallback(() => {
-      const token = localStorage.getItem("token");
-      return { Authorization: `Bearer ${token}` };
-    }, []);

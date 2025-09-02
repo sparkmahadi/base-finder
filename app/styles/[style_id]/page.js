@@ -2,14 +2,23 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
+import AddEditForm from "./AddEditForm";
+import { useAuth } from "@/app/context/AuthContext";
 
 const StyleDetails = () => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const { style_id } = useParams();
+  const {userInfo, loading: authLoading} = useAuth();
   const router = useRouter();
   const [style, setStyle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState(null);
+
+  
+      const [categoryOptions, setCategoryOptions] = useState([]);
+      const [statusOptions, setStatusOptions] = useState([]);
 
   // Sampling states
   const [customSamplingName, setCustomSamplingName] = useState("");
@@ -58,12 +67,81 @@ const StyleDetails = () => {
     setCustomSamplingDate("");
   };
 
+      const addNewOption = async (optionType, value) => {
+        if (!value) return;
+
+        let setOptions, options, endpoint;
+
+        if (optionType === "buyer") {
+            setOptions = setBuyerOptions;
+            options = buyerOptions;
+            endpoint = "buyers";
+        } else if (optionType === "category") {
+            setOptions = setCategoryOptions;
+            options = categoryOptions;
+            endpoint = "categories";
+        } else if (optionType === "status") {
+            setOptions = setStatusOptions;
+            options = statusOptions;
+            endpoint = "statuses";
+        }
+
+        if (!options.includes(value)) {
+            setOptions((prev) => [...prev, value].sort());
+
+            try {
+                await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+                    value, createdBy: userInfo?.username
+                }, {
+                    headers: getAuthHeaders(),
+                });
+                console.log(`Saved new ${optionType}: ${value}`);
+            } catch (err) {
+                console.error(`Error saving ${optionType}:`, err);
+                toast.error(`Failed to save new ${optionType} to database.`);
+            }
+        }
+    };
+
+
   // Add new production
   const addProduction = () => {
     if (!customFactoryName) return;
     setProductions([...productions, { factory: customFactoryName }]);
     setCustomFactoryName("");
   };
+
+      const handleSave = async (payload) => {
+      setLoading(true);
+      try {
+        const response = editingLogId
+          ? await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload)
+          : await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
+  
+        if (editingLogId) {
+          setLogs((prev) =>
+            prev.map((log) => (log._id === editingLogId ? response.data : log))
+          );
+          toast.success("Log updated successfully!");
+        } else {
+          setLogs((prev) => [response.data, ...prev]);
+          toast.success("Log added successfully!");
+        }
+        resetForm();
+        setShowAddForm(false);
+      } catch (error) {
+        if (error.response?.status === 409) {
+          toast.error(
+            "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
+          );
+        } else {
+          console.error("Error saving log:", error);
+          toast.error("Failed to save log.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // Submit updated info to backend
   const handleSubmit = async () => {
@@ -128,6 +206,20 @@ const StyleDetails = () => {
           </div>
         ))}
       </div>
+
+      <button className="bg-amber-700" onClick={() => setShowAddForm(true)}>Add Pattern Release</button>
+
+      {showAddForm &&
+        <AddEditForm
+          handleSave={handleSave}
+          addNewOption={addNewOption}
+          buyer={style.buyer}
+          categoryOptions={categoryOptions}
+          statusOptions={statusOptions}
+          userInfo={userInfo}
+        />}
+
+      <h2>Sampling and Production Info</h2>
 
       {/* Samplings */}
       <div className="mb-6">

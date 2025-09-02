@@ -30,7 +30,7 @@ export default function Styles() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/v2/styles", {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v2/styles`, {
           headers: getAuthHeaders(),
         });
         setData(res.data.data);
@@ -93,7 +93,7 @@ export default function Styles() {
   const handleDelete = async (id) => {
     setLoading(true);
     try {
-      const res = await axios.delete(`http://localhost:5000/api/v2/styles/${id}`);
+      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/${id}`);
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
     }

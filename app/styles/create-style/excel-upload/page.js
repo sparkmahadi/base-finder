@@ -27,20 +27,46 @@ const ExcelUpload = () => {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+            const excelDateToISO = (val) => {
+                if (!val) return "";
+                if (typeof val === "number") {
+                    // convert Excel serial to JS date
+                    const parsed = XLSX.SSF.parse_date_code(val);
+                    if (!parsed) return val;
+                    const jsDate = new Date(parsed.y, parsed.m - 1, parsed.d);
+                    return jsDate.toISOString().split("T")[0]; // "YYYY-MM-DD"
+                }
+                return val; // already string or text
+            };
+
             const formatted = jsonData.map((row) => ({
                 buyer: row["Buyer"],
                 season: row["Season"],
                 style: row["Style Code"],
-                description: row["Style Description"],
-                versions: row["Version"],
-                fabrication: row["Fabrication"],
+                descr: row["Style Description"],
+                version: row["Version"],
+                fabric: row["Fabrication"],
                 status: row["Style Status"],
                 item: row["Item"],
+                similar: row["Similar Styles"],
+                prints: row["No. of prints"],
+                sampling: {
+                    test: excelDateToISO(row["TESTING"]),
+                    pp: excelDateToISO(row["PP"]),
+                    pp_sc: excelDateToISO(row["PP-Screen"]),
+                },
+                prod: {
+                    pro: excelDateToISO(row["PRO"]),
+                    pro_sc: excelDateToISO(row["PRO-SCREEN"]),
+                },
             }));
+
             setExcelData(formatted);
         };
         reader.readAsBinaryString(file);
     };
+
 
     // Send parsed data to backend
     const handleSubmit = async () => {

@@ -12,14 +12,11 @@ const StyleDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   // Sampling states
-  const [selectedSampling, setSelectedSampling] = useState("");
-  const [samplingDate, setSamplingDate] = useState("");
   const [customSamplingName, setCustomSamplingName] = useState("");
   const [customSamplingDate, setCustomSamplingDate] = useState("");
   const [samplings, setSamplings] = useState([]);
 
   // Production states
-  const [selectedFactory, setSelectedFactory] = useState("");
   const [customFactoryName, setCustomFactoryName] = useState("");
   const [productions, setProductions] = useState([]);
 
@@ -33,16 +30,13 @@ const StyleDetails = () => {
     const fetchStyle = async () => {
       try {
         const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/${style_id}`,
+          `${API_BASE_URL}/styles/${style_id}`,
           { headers: getAuthHeaders() }
         );
         const styleInfo = res.data.data;
         setStyle(styleInfo);
 
-        // Initialize samplings
         if (styleInfo.samplings) setSamplings(styleInfo.samplings);
-
-        // Initialize productions (handle object or array)
         if (styleInfo.productions) {
           if (Array.isArray(styleInfo.productions)) setProductions(styleInfo.productions);
           else setProductions([styleInfo.productions]);
@@ -54,7 +48,7 @@ const StyleDetails = () => {
       }
     };
     fetchStyle();
-  }, [style_id, getAuthHeaders]);
+  }, [style_id, getAuthHeaders, API_BASE_URL]);
 
   // Add new sampling
   const addSampling = () => {
@@ -75,6 +69,7 @@ const StyleDetails = () => {
   const handleSubmit = async () => {
     try {
       const payload = {
+        ...style, // include editable fields
         samplings,
         productions,
       };
@@ -124,7 +119,7 @@ const StyleDetails = () => {
               <input
                 type="text"
                 className="border rounded px-2 py-1 flex-1"
-                value={style[field]}
+                value={style[field] || ""}
                 onChange={(e) => setStyle({ ...style, [field]: e.target.value })}
               />
             ) : (

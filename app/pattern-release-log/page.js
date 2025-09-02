@@ -5,8 +5,9 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import Loader from "../components/Loader";
-import { format } from "date-fns";
-import DownloadButton from "./DownloadButton";
+import FilterBar from "./FilterBar";
+import AddEditForm from "./AddEditForm";
+import LogTable from "./LogTable";
 
 const PatternReleaseLog = () => {
     const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}`;
@@ -68,11 +69,6 @@ const PatternReleaseLog = () => {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
 
-    // Add these in your state section
-    // const [buyerFilter, setBuyerFilter] = useState("");
-    // const [statusFilter, setStatusFilter] = useState("");
-    // const [categoryFilter, setCategoryFilter] = useState("");
-    // const [showOnlyMine, setShowOnlyMine] = useState(false);
 
     // Add this state
     const [filters, setFilters] = useState({
@@ -90,46 +86,17 @@ const PatternReleaseLog = () => {
     });
     const [showOnlyMine, setShowOnlyMine] = useState(true);
 
-    const clearFilters = () => {
-        setFilters({
-            date: "",
-            buyer: "",
-            style: "",
-            category: "",
-            body: "",
-            size: "",
-            status: "",
-            team: "",
-            comments: "",
-            added_by: "",
-            added_at: ""
-        });
-        setSearchTerm("");
-    };
-
     const getUniqueOptions = (key) => {
         const values = logs.map((log) => log[key]).filter(Boolean);
         return [...new Set(values)];
     };
 
-
-
-
     const [buyerOptions, setBuyerOptions] = useState([]);
     const [categoryOptions, setCategoryOptions] = useState([]);
     const [statusOptions, setStatusOptions] = useState([]);
 
-    // State to explicitly show custom input field for each dropdown
-    const [showCustomBuyerInput, setShowCustomBuyerInput] = useState(false);
-    const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
-    const [showCustomStatusInput, setShowCustomStatusInput] = useState(false);
-
     // Refs for auto-focus
     const dateInputRef = useRef(null);
-    const customBuyerRef = useRef(null);
-    const customCategoryRef = useRef(null);
-    const customStatusRef = useRef(null);
-
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -169,48 +136,6 @@ const PatternReleaseLog = () => {
         }
     }, [showAddForm]);
 
-    // Handle change for the main form inputs
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-
-        if (name === "buyer") {
-            if (value === "--- Add New ---") {
-                setShowCustomBuyerInput(true);
-                setFormInput((prev) => ({ ...prev, [name]: "" })); // Clear buyer value
-                setTimeout(() => customBuyerRef.current?.focus(), 0); // Focus on custom input
-            } else {
-                setShowCustomBuyerInput(false);
-                setFormInput((prev) => ({ ...prev, [name]: value }));
-            }
-        } else if (name === "item") {
-            if (value === "--- Add New ---") {
-                setShowCustomCategoryInput(true);
-                setFormInput((prev) => ({ ...prev, [name]: "" })); // Clear item value
-                setTimeout(() => customCategoryRef.current?.focus(), 0); // Focus on custom input
-            } else {
-                setShowCustomCategoryInput(false);
-                setFormInput((prev) => ({ ...prev, [name]: value }));
-            }
-        } else if (name === "status") {
-            if (value === "--- Add New ---") {
-                setShowCustomStatusInput(true);
-                setFormInput((prev) => ({ ...prev, [name]: "" })); // Clear status value
-                setTimeout(() => customStatusRef.current?.focus(), 0); // Focus on custom input
-            } else {
-                setShowCustomStatusInput(false);
-                setFormInput((prev) => ({ ...prev, [name]: value }));
-            }
-        } else {
-            setFormInput((prev) => ({ ...prev, [name]: value }));
-        }
-    };
-
-    // Handle change for custom input fields
-    const handleCustomInputChange = (e, fieldName) => {
-        const value = e.target.value;
-        setFormInput((prev) => ({ ...prev, [fieldName]: value }));
-    };
-
     // Resets the form and custom input states
     const resetForm = () => {
         setFormInput({
@@ -224,29 +149,6 @@ const PatternReleaseLog = () => {
         setShowCustomCategoryInput(false);
         setShowCustomStatusInput(false);
     };
-
-    // Function to add a new option to its respective list if it's a new custom value
-    // const addNewOption = (optionType, value) => {
-    //     if (!value) return; // Don't add empty values
-
-    //     let setOptions;
-    //     let options;
-
-    //     if (optionType === "buyer") {
-    //         setOptions = setBuyerOptions;
-    //         options = buyerOptions;
-    //     } else if (optionType === "category") {
-    //         setOptions = setCategoryOptions;
-    //         options = categoryOptions;
-    //     } else if (optionType === "status") {
-    //         setOptions = setStatusOptions;
-    //         options = statusOptions;
-    //     }
-
-    //     if (setOptions && value && !options.includes(value)) {
-    //         setOptions((prev) => [...prev, value].sort());
-    //     }
-    // };
 
     const addNewOption = async (optionType, value) => {
         if (!value) return;
@@ -284,39 +186,37 @@ const PatternReleaseLog = () => {
         }
     };
 
+    const handleSave = async (payload) => {
+    setLoading(true);
+    try {
+      const response = editingLogId
+        ? await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload)
+        : await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
 
-    // Adds a new log entry via API
-    const addLog = async () => {
-        if (!formInput.date || !formInput.buyer || !formInput.style || !formInput.item || !formInput.status) {
-            toast.error("Please fill in Date, Buyer, Style, Category, and Status fields.");
-            return;
-        }
-
-        // Ensure custom values are added to the options list before submission
-        await addNewOption("buyer", formInput.buyer);
-        await addNewOption("category", formInput.item);
-        await addNewOption("status", formInput.status);
-
-
-        const payload = { ...formInput, added_by: userInfo?.username, user_team: userInfo?.team, added_at: new Date() }
-        setLoading(true);
-        try {
-            const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
-            setLogs((prev) => [response.data, ...prev]);
-            resetForm();
-            toast.success("Log added successfully!");
-            setShowAddForm(false);
-        } catch (error) {
-            if (error.response && error.response.status === 409) {
-                toast.error("A log with the same Date, Buyer, Style, Item, Body, and Size already exists.");
-            } else {
-                console.error("Error adding log:", error);
-                toast.error("Failed to add log?.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (editingLogId) {
+        setLogs((prev) =>
+          prev.map((log) => (log._id === editingLogId ? response.data : log))
+        );
+        toast.success("Log updated successfully!");
+      } else {
+        setLogs((prev) => [response.data, ...prev]);
+        toast.success("Log added successfully!");
+      }
+      resetForm();
+      setShowAddForm(false);
+    } catch (error) {
+      if (error.response?.status === 409) {
+        toast.error(
+          "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
+        );
+      } else {
+        console.error("Error saving log:", error);
+        toast.error("Failed to save log.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
     // Sets the form with the log data for editing
     const startEditing = (log) => {
@@ -337,56 +237,12 @@ const PatternReleaseLog = () => {
 
         setShowAddForm(true);
     };
-
-    // Saves the edited log entry via API
-    const saveEditedLog = async () => {
-        if (!formInput.date || !formInput.buyer || !formInput.style || !formInput.item || !formInput.status) {
-            toast.error("Please fill in Date, Buyer, Style, Category, and Status fields.");
-            return;
-        }
-
-        // Ensure custom values are added to the options list before submission
-        await addNewOption("buyer", formInput.buyer);
-        await addNewOption("category", formInput.item);
-        await addNewOption("status", formInput.status);
-
-
-        setLoading(true);
-
-        const payload = { ...formInput, updated_by: userInfo?.username, last_updated_at: new Date() }
-        try {
-            const response = await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload);
-            setLogs((prev) =>
-                prev.map((log) =>
-                    log?._id === editingLogId ? response.data : log
-                )
-            );
-            setEditingLogId(null);
-            resetForm();
-            toast.success("Log updated successfully!");
-            setShowAddForm(false);
-        } catch (error) {
-            if (error.response && error.response.status === 409) {
-                toast.error("A log with the same Date, Buyer, Style, Item, Body, and Size already exists.");
-            } else {
-                console.error("Error saving edited log:", error);
-                toast.error("Failed to update log?.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Cancels the editing process
     const cancelEditing = () => {
         setEditingLogId(null);
         resetForm();
         setShowAddForm(false);
     };
-
-    const handleClearSearch = () => {
-        setSearchTerm("");
-    }
 
     // Deletes a log entry via API
     const deleteLog = async (idToDelete) => {
@@ -411,14 +267,6 @@ const PatternReleaseLog = () => {
     };
 
     // Filters logs based on the search term
-    // const filteredLogs = logs.filter((log) =>
-    //     Object.values(log).some(
-    //         (value) =>
-    //             typeof value === "string" &&
-    //             value.toLowerCase().includes(searchTerm.toLowerCase())
-    //     )
-    // );
-
     const filteredLogs = logs.filter((log) => {
         const matchesSearch = Object.values(log).some(
             (value) =>
@@ -451,391 +299,43 @@ const PatternReleaseLog = () => {
                     <Loader />
                 )}
 
-                <div className="mb-6 flex gap-5">
-                    <input
-                        type="text"
-                        placeholder="Search by any field..."
-                        className="w-2/3 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <button className="px-5 py-2 w-1/6 bg-gray-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
-                        onClick={handleClearSearch}
-                    >Clear Search</button>
-                    <button
-                        onClick={clearFilters}
-                        className="px-4 py-2 w-1/6 bg-teal-700 text-white rounded-md shadow hover:bg-red-600 transition"
-                    >
-                        Clear Filters
-                    </button>
-                </div>
-
-                <div className="mb-6 text-right lg:flex gap-5 justify-end">
-                    <button
-                        onClick={() => {
-                            setShowAddForm(!showAddForm);
-                            if (showAddForm) {
-                                cancelEditing();
-                            }
-                        }}
-                        className="px-5 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md"
-                    >
-                        {showAddForm ? "Hide Form" : "Add New Log"}
-                    </button>
-
-                    {/* Toggle slider*/}
-                    <button
-                        onClick={() => setShowOnlyMine((prev) => !prev)}
-                        className={`relative inline-flex items-center h-8 w-36 rounded-full p-1 transition-colors duration-300 ${showOnlyMine ? "bg-green-600" : "bg-gray-400"
-                            }`}
-                    >
-                        <span
-                            className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${showOnlyMine ? "translate-x-28" : "translate-x-0"
-                                }`}
-                        />
-                        <span
-                            className={`ml-8 text-sm font-medium transition-colors duration-300 ${showOnlyMine ? "text-white" : "text-gray-800"
-                                }`}
-                        >
-                            {showOnlyMine ? "My Patterns" : "All Patterns"}
-                        </span>
-                    </button>
-                    {
-                        userInfo?.role === "admin" && <DownloadButton data={logs} />
-                    }
-                </div>
-
+                <FilterBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    showOnlyMine={showOnlyMine}
+                    setShowOnlyMine={setShowOnlyMine}
+                    handleClearSearch={() => setSearchTerm("")}
+                    showAddForm={showAddForm}
+                    setShowAddForm={setShowAddForm}
+                    cancelEditing={resetForm}
+                    userInfo={userInfo}
+                    logs={logs}
+                />
 
                 {showAddForm && (
-                    <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
-                        <h2 className="text-xl font-bold text-gray-700 mb-4">
-                            {editingLogId ? "Edit Log Entry" : "Add New Log Entry"}
-                        </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-                            {/* Date */}
-                            <div>
-                                <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
-                                <input
-                                    ref={dateInputRef}
-                                    type="date"
-                                    id="date"
-                                    name="date"
-                                    value={formInput.date}
-                                    onChange={handleChange}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                            </div>
-
-                            {/* Buyer Dropdown with "Add New" option */}
-                            <div>
-                                <label htmlFor="buyer" className="block text-sm font-medium text-gray-700">Buyer</label>
-                                <select
-                                    id="buyer"
-                                    name="buyer"
-                                    value={formInput.buyer || ""} // Ensure controlled component
-                                    onChange={handleChange}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                >
-                                    <option value="">Select Buyer</option>
-                                    {buyerOptions.map((option) => (
-                                        <option key={option} value={option}>{option}</option>
-                                    ))}
-                                    <option value="--- Add New ---">--- Add New ---</option>
-                                </select>
-                                {showCustomBuyerInput && (
-                                    <input
-                                        ref={customBuyerRef}
-                                        type="text"
-                                        value={formInput.buyer}
-                                        onChange={(e) => handleCustomInputChange(e, "buyer")}
-                                        placeholder="Enter New Buyer"
-                                        className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                    />
-                                )}
-                            </div>
-
-                            {/* Style */}
-                            <div>
-                                <label htmlFor="style" className="block text-sm font-medium text-gray-700">Style</label>
-                                <input
-                                    type="text"
-                                    id="style"
-                                    name="style"
-                                    value={formInput.style}
-                                    onChange={handleChange}
-                                    placeholder="Style (comma-separated)"
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                            </div>
-
-                            {/* Category (Item) Dropdown with "Add New" option */}
-                            <div>
-                                <label htmlFor="item" className="block text-sm font-medium text-gray-700">Category</label>
-                                <select
-                                    id="item"
-                                    name="item"
-                                    value={formInput.item || ""}
-                                    onChange={handleChange}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                >
-                                    <option value="">Select Category</option>
-                                    {categoryOptions.map((option) => (
-                                        <option key={option} value={option}>{option}</option>
-                                    ))}
-                                    <option value="--- Add New ---">--- Add New ---</option>
-                                </select>
-                                {showCustomCategoryInput && (
-                                    <input
-                                        ref={customCategoryRef}
-                                        type="text"
-                                        value={formInput.item}
-                                        onChange={(e) => handleCustomInputChange(e, "item")}
-                                        placeholder="Enter New Category"
-                                        className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                    />
-                                )}
-                            </div>
-
-                            {/* Body */}
-                            <div>
-                                <label htmlFor="body" className="block text-sm font-medium text-gray-700">BODY</label>
-                                <input
-                                    type="text"
-                                    id="body"
-                                    name="body"
-                                    value={formInput.body}
-                                    onChange={handleChange}
-                                    placeholder="BODY"
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                            </div>
-
-                            {/* Size */}
-                            <div>
-                                <label htmlFor="size" className="block text-sm font-medium text-gray-700">Size</label>
-                                <input
-                                    type="text"
-                                    id="size"
-                                    name="size"
-                                    value={formInput.size}
-                                    onChange={handleChange}
-                                    placeholder="Size"
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                            </div>
-
-                            {/* Status Dropdown with "Add New" option */}
-                            <div>
-                                <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                                <select
-                                    id="status"
-                                    name="status"
-                                    value={formInput.status || ""}
-                                    onChange={handleChange}
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                >
-                                    <option value="">Select Status</option>
-                                    {statusOptions.map((option) => (
-                                        <option key={option} value={option}>{option}</option>
-                                    ))}
-                                    <option value="--- Add New ---">--- Add New ---</option>
-                                </select>
-                                {showCustomStatusInput && (
-                                    <input
-                                        ref={customStatusRef}
-                                        type="text"
-                                        value={formInput.status}
-                                        onChange={(e) => handleCustomInputChange(e, "status")}
-                                        placeholder="Enter New Status"
-                                        className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                    />
-                                )}
-                            </div>
-
-
-                            {/* Comments */}
-                            <div className="sm:col-span-2 lg:col-span-4">
-                                <label htmlFor="comments" className="block text-sm font-medium text-gray-700">Comments</label>
-                                <textarea
-                                    id="comments"
-                                    name="comments"
-                                    rows={2}
-                                    value={formInput.comments}
-                                    onChange={handleChange}
-                                    placeholder="Any remarks or notes"
-                                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                />
-                            </div>
-
-
-                        </div>
-                        <div className="flex justify-end space-x-3">
-                            {editingLogId ? (
-                                <>
-                                    <button
-                                        onClick={saveEditedLog}
-                                        className="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 shadow-md"
-                                    >
-                                        Save Changes
-                                    </button>
-                                    <button
-                                        onClick={cancelEditing}
-                                        className="px-5 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition-colors duration-200 shadow-md"
-                                    >
-                                        Cancel
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={addLog}
-                                    className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md"
-                                >
-                                    Add Log
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    <AddEditForm
+                        formInput={formInput}
+                        setFormInput={setFormInput}
+                        handleSave={handleSave}
+                        editingLogId={editingLogId}
+                        resetForm={resetForm}
+                        addNewOption={addNewOption}
+                        buyerOptions={buyerOptions}
+                        categoryOptions={categoryOptions}
+                        statusOptions={statusOptions}
+                        userInfo={userInfo}
+                    />
                 )}
+                <LogTable
+                    filteredLogs={filteredLogs}
+                    filters={filters}
+                    startEditing={startEditing}
+                    deleteLog={deleteLog}
+                    userInfo={userInfo}
+                    getUniqueOptions={getUniqueOptions}
+                    setFilters={setFilters}
+                />
 
-                <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-
-
-                            <tr>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Date
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Buyer
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Style
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Category
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Body
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Size
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Team
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Comments
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Added By
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Added At
-                                </th>
-                                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
-                                </th>
-                            </tr>
-
-                            {/* filtering row */}
-                            <tr className="bg-white">
-                                {Object.keys(filters).map((key) => (
-                                    <th key={key} className="px-3 py-1">
-                                        <select
-                                            value={filters[key]}
-                                            onChange={(e) =>
-                                                setFilters({ ...filters, [key]: e.target.value })
-                                            }
-                                            className="w-full px-2 py-1 border rounded text-sm"
-                                        >
-                                            <option value="">All</option>
-                                            {getUniqueOptions(key).map((val) => (
-                                                <option key={val} value={val}>
-                                                    {val}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredLogs.length > 0 ? (
-                                filteredLogs.map((log) => (
-                                    <tr key={log?._id} className="hover:bg-gray-50">
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {new Date(log?.date).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.buyer}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800 font-semibold">
-                                            {log?.style}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.item}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.body}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.size}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.status}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.user_team}
-                                        </td>
-                                        <td
-                                            className="px-3 py-3 text-sm text-gray-800 max-w-xs truncate"
-                                            title={log?.comments || "-"} // Shows full comment on hover
-                                        >
-                                            {log?.comments?.length > 50 ? `${log.comments.slice(0, 50)}...` : (log?.comments || "-")}
-                                        </td>
-
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.added_by}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm text-gray-800">
-                                            {log?.added_at ? format(log?.added_at, "Pp") : "Not Found"}
-                                        </td>
-                                        <td className="px-3 py-3 text-sm font-medium">
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => startEditing(log)}
-                                                    className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded-md bg-blue-100 hover:bg-blue-200 transition-colors duration-200"
-                                                >
-                                                    Edit
-                                                </button>
-                                                {
-                                                    userInfo?.role === "admin" &&
-                                                    <button
-                                                        onClick={() => deleteLog(log?._id)}
-                                                        className="text-red-600 hover:text-red-900 px-3 py-1 rounded-md bg-red-100 hover:bg-red-200 transition-colors duration-200"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="8" className="px-3 py-3 text-center text-gray-500">
-                                        No log entries found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
     );

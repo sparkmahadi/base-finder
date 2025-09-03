@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { Search, Plus, Eye, Trash2, X } from 'lucide-react'; // Import Lucide icons
+import Modal from "./Modal";
 
 export default function Styles() {
   const [data, setData] = useState([]);
@@ -15,11 +17,11 @@ export default function Styles() {
     status: "",
     fabrication: "",
   });
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   const router = useRouter();
 
-  // Auth headers
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
     return {
@@ -33,41 +35,32 @@ export default function Styles() {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles`, {
           headers: getAuthHeaders(),
         });
-        console.log(res.data.data)
         setData(res.data.data);
         setFilteredData(res.data.data);
       } catch (error) {
+        toast.error("Failed to fetch styles.");
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [getAuthHeaders]);
 
-  // Handle search and filters
   useEffect(() => {
     let result = data;
-
-    // Search by style
     if (search.trim()) {
       result = result.filter((item) =>
         item.style.toLowerCase().includes(search.toLowerCase())
       );
     }
-
-    // Filter by dropdowns
     Object.keys(filters).forEach((key) => {
       if (filters[key]) {
-        result = result.filter(
-          (item) =>
-            item[key] &&
-            item[key].toLowerCase() === filters[key].toLowerCase()
+        result = result.filter((item) =>
+          item[key] && item[key].toLowerCase() === filters[key].toLowerCase()
         );
       }
     });
-
     setFilteredData(result);
   }, [search, filters, data]);
 
@@ -78,136 +71,272 @@ export default function Styles() {
     }));
   };
 
-  if (loading) {
-    return <p className="text-center text-gray-500">Loading...</p>;
-  }
+  const clearFilters = () => {
+    setSearch("");
+    setFilters({
+      buyer: "",
+      season: "",
+      status: "",
+      fabrication: "",
+    });
+  };
 
-
-  // Extract unique values for dropdown filters
   const getUniqueValues = (field) => {
     return [...new Set(data.map((item) => item[field]).filter(Boolean))];
   };
 
-  const handleDelete = async (id) => {
+  const openDeleteModal = (item) => {
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setItemToDelete(null);
+    setDeleteModalOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
     setLoading(true);
     try {
-      const res = await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/${itemToDelete._id}`, {
+        headers: getAuthHeaders(),
+      });
+      toast.success("Style deleted successfully!");
+      const updatedData = data.filter((item) => item._id !== itemToDelete._id);
+      setData(updatedData);
+      setFilteredData(updatedData);
+      closeDeleteModal();
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      active: "bg-green-500",
+      inactive: "bg-gray-500",
+      pending: "bg-yellow-500",
+    };
+    const colorClass = statusMap[status?.toLowerCase()] || "bg-gray-500";
+    return (
+      <span className={`inline-block px-2 py-1 text-xs font-semibold text-white rounded-full ${colorClass}`}>
+        {status}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-100">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-full bg-gray-400 h-12 w-12"></div>
+          <div className="flex-1 space-y-4 py-1">
+            <div className="h-4 bg-gray-400 rounded w-3/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-400 rounded"></div>
+              <div className="h-4 bg-gray-400 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">Styles Data</h2>
-
-      {/* Search + Filters */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <input
-          type="text"
-          placeholder="Search by style..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded w-60"
-        />
-
-        <select
-          value={filters.buyer}
-          onChange={(e) => handleFilterChange("buyer", e.target.value)}
-          className="border p-2 rounded"
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-extrabold text-gray-900">Styles Overview ✨</h2>
+        <button
+          onClick={() => router.push('/styles/create-style')}
+          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
         >
-          <option value="">Filter by Buyer</option>
-          {getUniqueValues("buyer").map((val) => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.season}
-          onChange={(e) => handleFilterChange("season", e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">Filter by Season</option>
-          {getUniqueValues("season").map((val) => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.status}
-          onChange={(e) => handleFilterChange("status", e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">Filter by Status</option>
-          {getUniqueValues("status").map((val) => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.fabrication}
-          onChange={(e) => handleFilterChange("fabrication", e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">Filter by Fabrication</option>
-          {getUniqueValues("fabrication").map((val) => (
-            <option key={val} value={val}>
-              {val}
-            </option>
-          ))}
-        </select>
+          <Plus className="mr-2 h-5 w-5" />
+          Create New Style
+        </button>
       </div>
 
-      {/* Table */}
-      <table className="w-full border border-gray-300 text-left">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">SL</th>
-            <th className="border p-2">Buyer</th>
-            <th className="border p-2">Season</th>
-            <th className="border p-2">Style</th>
-            <th className="border p-2">Fabrication</th>
-            <th className="border p-2">Versions</th>
-            <th className="border p-2">Status</th>
-            <th className="border p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.map((item, idx) => (
-            <tr key={item._id.$oid || item._id} className="hover:bg-gray-100">
-              <td className="border p-2">{idx+1}</td>
-              <td className="border p-2">{item.buyer}</td>
-              <td className="border p-2">{item.season}</td>
-              <td className="border p-2">{item.style}</td>
-              <td className="border p-2">{item.fabrication}</td>
-              <td className="border p-2">{item.versions}</td>
-              <td className="border p-2">{item.status}</td>
-              <td className="border p-2">
-                <button
-                  onClick={() => router.push(`/styles/${item._id}`)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  Details
-                </button>
-                <button
-                  onClick={() => handleDelete(item._id)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <button onClick={()=> router.push('/styles/create-style')}>Create Style</button>
+      <div className="bg-white p-6 rounded-xl shadow-md mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2">
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Search Style</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="text-gray-400 h-5 w-5" />
+              </div>
+              <input
+                id="search"
+                type="text"
+                placeholder="Search by style name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          <div className="col-span-1">
+            <label htmlFor="buyer" className="block text-sm font-medium text-gray-700 mb-1">Buyer</label>
+            <select
+              id="buyer"
+              value={filters.buyer}
+              onChange={(e) => handleFilterChange("buyer", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Buyers</option>
+              {getUniqueValues("buyer").map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-1">
+            <label htmlFor="season" className="block text-sm font-medium text-gray-700 mb-1">Season</label>
+            <select
+              id="season"
+              value={filters.season}
+              onChange={(e) => handleFilterChange("season", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Seasons</option>
+              {getUniqueValues("season").map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-1">
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              id="status"
+              value={filters.status}
+              onChange={(e) => handleFilterChange("status", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Statuses</option>
+              {getUniqueValues("status").map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-1">
+            <label htmlFor="fabrication" className="block text-sm font-medium text-gray-700 mb-1">Fabrication</label>
+            <select
+              id="fabrication"
+              value={filters.fabrication}
+              onChange={(e) => handleFilterChange("fabrication", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Fabrications</option>
+              {getUniqueValues("fabric").map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {(search || Object.values(filters).some(f => f)) && (
+          <div className="mt-4 text-right">
+            <button
+              onClick={clearFilters}
+              className="text-sm font-semibold text-gray-600 hover:text-red-500 flex items-center justify-end w-max ml-auto"
+            >
+              <X className="mr-1 h-4 w-4" />
+              Clear Filters
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        {filteredData.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            <p className="text-lg">No styles found matching your criteria. 😟</p>
+            <button onClick={clearFilters} className="mt-4 text-blue-500 hover:underline">
+              Clear all filters to see all styles.
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">SL</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Buyer</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Season</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Style</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fabrication</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Versions</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.map((item, idx) => (
+                  <tr key={item._id.$oid || item._id} className="hover:bg-gray-50 transition duration-150 ease-in-out">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{idx + 1}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.buyer}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.season}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer" onClick={() => router.push(`/styles/${item._id}`)}>
+                      {item.style}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.fabric}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.version}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {getStatusBadge(item.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => router.push(`/styles/${item._id}`)}
+                          className="text-blue-600 hover:text-blue-900 transition duration-150 ease-in-out p-1 rounded-full hover:bg-gray-200"
+                          title="View Details"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(item)}
+                          className="text-red-600 hover:text-red-900 transition duration-150 ease-in-out p-1 rounded-full hover:bg-gray-200"
+                          title="Delete Style"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <Modal show={deleteModalOpen} onClose={closeDeleteModal}>
+        <div className="p-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm Deletion</h3>
+          <p className="text-gray-700 mb-6">Are you sure you want to delete the style <span className="font-semibold">{itemToDelete?.style}</span>? This action cannot be undone.</p>
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={closeDeleteModal}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

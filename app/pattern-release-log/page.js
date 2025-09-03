@@ -69,6 +69,10 @@ const PatternReleaseLog = () => {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
 
+    const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+    const [showCustomBuyerInput, setShowCustomBuyerInput] = useState(false);
+    const [showCustomStatusInput, setShowCustomStatusInput] = useState(false);
+
 
     // Add this state
     const [filters, setFilters] = useState({
@@ -187,36 +191,36 @@ const PatternReleaseLog = () => {
     };
 
     const handleSave = async (payload) => {
-    setLoading(true);
-    try {
-      const response = editingLogId
-        ? await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload)
-        : await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
+        setLoading(true);
+        try {
+            const response = editingLogId
+                ? await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload)
+                : await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
 
-      if (editingLogId) {
-        setLogs((prev) =>
-          prev.map((log) => (log._id === editingLogId ? response.data : log))
-        );
-        toast.success("Log updated successfully!");
-      } else {
-        setLogs((prev) => [response.data, ...prev]);
-        toast.success("Log added successfully!");
-      }
-      resetForm();
-      setShowAddForm(false);
-    } catch (error) {
-      if (error.response?.status === 409) {
-        toast.error(
-          "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
-        );
-      } else {
-        console.error("Error saving log:", error);
-        toast.error("Failed to save log.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (editingLogId) {
+                setLogs((prev) =>
+                    prev.map((log) => (log._id === editingLogId ? response.data : log))
+                );
+                toast.success("Log updated successfully!");
+            } else {
+                setLogs((prev) => [response.data.data, ...prev]);
+                toast.success("Log added successfully!");
+            }
+            resetForm();
+            setShowAddForm(false);
+        } catch (error) {
+            if (error.response?.status === 409) {
+                toast.error(
+                    "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
+                );
+            } else {
+                console.error("Error saving log:", error);
+                toast.error("Failed to save log.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Sets the form with the log data for editing
     const startEditing = (log) => {
@@ -326,7 +330,7 @@ const PatternReleaseLog = () => {
                         userInfo={userInfo}
                     />
                 )}
-                
+
                 <LogTable
                     filteredLogs={filteredLogs}
                     filters={filters}

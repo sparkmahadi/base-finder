@@ -1,30 +1,38 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, version } from "react";
+import { toast } from "react-toastify";
 
 const AddEditForm = ({
   handleSave,
   addNewOption,
   buyer,
-  categoryOptions,
-  statusOptions,
+  styleCode,
+  styleId,
+  version,
+  category,
   userInfo,
+  statusOptions,
+  getAuthHeaders,
+  API_BASE_URL
 }) => {
 
-      
-    // Helper function to get today's date in YYYY-MM-DD format
-    const getTodayDate = () => {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-    
+
+
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
 
   const [formInput, setFormInput] = useState({
     date: getTodayDate(), // Set today's date as default
-    buyer: "",
-    style: "",
-    item: "",
+    buyer: buyer,
+    style: styleCode,
+    item: category,
+    version: version,
     body: "",
     size: "",
     status: "",
@@ -104,14 +112,18 @@ const AddEditForm = ({
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    const payload = { ...formInput, added_by: userInfo?.username, user_team: userInfo?.team, added_at: new Date() };
+    const payload = { ...formInput, added_by: userInfo?.username, user_team: userInfo?.team, added_at: new Date(),};
+    console.log(payload);
+    if (formInput.status === "") {
+      return toast.error('Please select a status')
+    }
     handleSave(payload);
   };
 
   return (
     <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg shadow-inner">
       <h2 className="text-xl font-bold text-gray-700 mb-4">
-        {editingLogId ? "Edit Log Entry" : "Add New Log Entry"}
+        Add New Log Entry
       </h2>
       <form onSubmit={handleFormSubmit}>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
@@ -154,38 +166,34 @@ const AddEditForm = ({
               type="text"
               id="style"
               name="style"
-              value={formInput.style}
+              value={styleCode}
               onChange={handleChange}
               placeholder="Style"
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
             />
           </div>
           <div>
-            <label htmlFor="item" className="block text-sm font-medium text-gray-700">Category</label>
-            <select
+            <label htmlFor="item" className="block text-sm font-medium text-gray-700">Item</label>
+            <input
               id="item"
               name="item"
-              value={formInput.item || ""}
+              value={category || ""}
               onChange={handleChange}
               className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-            >
-              <option value="">Select Category</option>
-              {categoryOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-              <option value="--- Add New ---">--- Add New ---</option>
-            </select>
-            {showCustomCategoryInput && (
-              <input
-                ref={customCategoryRef}
-                type="text"
-                value={formInput.item}
-                onChange={(e) => handleCustomInputChange(e, "item")}
-                placeholder="Enter New Category"
-                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
-            )}
+            />
           </div>
+
+          <div>
+            <label htmlFor="version" className="block text-sm font-medium text-gray-700">Version</label>
+            <input
+              id="version"
+              name="version"
+              value={version || ""}
+              onChange={handleChange}
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+          </div>
+
           <div>
             <label htmlFor="body" className="block text-sm font-medium text-gray-700">Body</label>
             <input
@@ -250,13 +258,13 @@ const AddEditForm = ({
           />
         </div>
         <div className="flex justify-end space-x-3 mt-4">
-         (
-            <button
-              type="submit"
-              className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md"
-            >
-              Add Log
-            </button>
+          (
+          <button
+            type="submit"
+            className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md"
+          >
+            Add Log
+          </button>
           )
         </div>
       </form>

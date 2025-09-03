@@ -51,15 +51,11 @@ const ExcelUpload = () => {
                 item: row["Item"],
                 similar: row["Similar Styles"],
                 prints: row["No. of prints"],
-                sampling: [
-                    { test: excelDateToISO(row["TESTING"]) },
-                    { pp: excelDateToISO(row["PP"]) },
-                    { pp_sc: excelDateToISO(row["PP-Screen"]) },
-                ],
-                prod: [
-                    { pro: excelDateToISO(row["PRO"]) },
-                    { pro_sc: excelDateToISO(row["PRO-SCREEN"]) },
-                ],
+                testing: {date: excelDateToISO(row["TESTING"])},
+                pp: {date: excelDateToISO(row["PP"])},
+                pp_sc: {date: excelDateToISO(row["PP-Screen"])},
+                pro: {date: excelDateToISO(row["PRO"])},
+                pro_sc: {date: excelDateToISO(row["PRO-SCREEN"])},
             }));
 
             setExcelData(formatted);

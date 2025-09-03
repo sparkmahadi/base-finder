@@ -4,8 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import AddEditForm from "./AddEditForm";
 import { useAuth } from "@/app/context/AuthContext";
-import { ChevronLeft, CloudCog, Eye, Pencil, Save, Trash2, X } from "lucide-react";
+import { ChevronLeft, Pencil, Save, X } from "lucide-react";
 import { toast } from "react-toastify";
+import BasicStyleInfo from "./BasicStyleInfo";
+import SamplingCard from "./SamplingCard";
 
 const StyleDetails = () => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -16,7 +18,6 @@ const StyleDetails = () => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState(null);
 
 
   const [categoryOptions, setCategoryOptions] = useState([]);
@@ -28,18 +29,10 @@ const StyleDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [samplings, setSamplings] = useState([]);
 
-  // Production states
-  const [customFactoryName, setCustomFactoryName] = useState("");
-  const [productions, setProductions] = useState([]);
-
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
     return { Authorization: `Bearer ${token}` };
   }, []);
-
-  const apiFetchStatuses = async () => {
-
-  };
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -124,34 +117,81 @@ const StyleDetails = () => {
     }
   };
 
+  // const handleSave = async (payload) => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
+  //     const data1 = response.data.data;
+  //     const message = response.data.message;
+  //     console.log(data1)
+  //     toast.info(message);
+  //     if (response.data.success) {
+  //       payload.pattern_id = data1._id;
+  //       const newSampling = { ...payload };
+  //       const res2 = await axios.put(`${API_BASE_URL}/styles/update-style-sampling/${style?._id}`, {
+  //         action: "add",
+  //         ...newSampling,
+  //         updated_by: userInfo?.username,
+  //         updated_at: new Date(),
+  //       });
+  //       const data = res2.data;
+  //       if (data.success) {
+  //         toast.info(data.message);
+  //       } else {
+  //         toast.info(data.message)
+  //       }
+  //     }
+  //     // resetForm();
+  //     setShowAddForm(false);
+  //   } catch (error) {
+  //     if (error.response?.status === 409) {
+  //       toast.error(
+  //         "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
+  //       );
+  //     } else {
+  //       console.error("Error saving log:", error);
+  //       toast.error("Failed to save log.");
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  // Add new production
-  const addProduction = () => {
-    if (!customFactoryName) return;
-    setProductions([...productions, { factory: customFactoryName }]);
-    setCustomFactoryName("");
-  };
+  // Submit updated info to backend
 
   const handleSave = async (payload) => {
     setLoading(true);
     try {
+      // 1. Save pattern release log
       const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
       const data1 = response.data.data;
       const message = response.data.message;
-      console.log(data1)
+      console.log(data1);
       toast.info(message);
+
       if (response.data.success) {
         payload.pattern_id = data1._id;
-        const sampling = {...payload};
-        const res2 = await axios.put(`${API_BASE_URL}/styles/update-style-sampling/${style?._id}`, sampling);
+
+        // 2. Add sampling info directly to style document
+        const res2 = await axios.put(
+          `${API_BASE_URL}/styles/update-style-sampling/${style?._id}`,
+          {
+            action: "add",
+            status: payload.status,   // e.g. "pp"
+            date: payload.date,       // the sampling date
+            added_by: userInfo?.username,
+            added_at: new Date(),
+            comments: payload.comments || "",
+            pattern_id: data1._id,
+            updated_by: userInfo?.username,
+            updated_at: new Date(),
+          }
+        );
+
         const data = res2.data;
-        if (data.success) {
-          toast.info(data.message);
-        } else {
-          toast.info(data.message)
-        }
+        toast.info(data.message);
       }
-      // resetForm();
+
       setShowAddForm(false);
     } catch (error) {
       if (error.response?.status === 409) {
@@ -167,21 +207,15 @@ const StyleDetails = () => {
     }
   };
 
-  // Submit updated info to backend
+
   const handleSubmit = async () => {
     try {
-      const payload = {
-        ...style, // include editable fields
-        samplings,
-        productions,
-      };
+      const payload = { ...style };
 
-      await axios.put(
-        `${API_BASE_URL}/styles/${style_id}`,
-        payload,
-        { headers: getAuthHeaders() }
-      );
-      alert("Style updated successfully!");
+      const res = await axios.put(`${API_BASE_URL}/styles/${style_id}`, payload, { headers: getAuthHeaders() });
+      if (res.data.success) {
+        toast.success("Style updated successfully!");
+      }
       router.refresh();
       setIsEditing(false);
     } catch (error) {
@@ -214,120 +248,32 @@ const StyleDetails = () => {
             </button>
           )}
           <button
-            onClick={handleSubmit}
+            onClick={() => {
+              if (isEditing) {
+                handleSubmit();   // save only when editing
+              } else {
+                setIsEditing(true); // enter edit mode
+              }
+            }}
             className={`px-4 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center ${isEditing ? "bg-purple-600 hover:bg-purple-700" : "bg-blue-600 hover:bg-blue-700"
               }`}
             disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              <>
-                {isEditing ? <Save className="h-5 w-5 mr-2" /> : <Pencil className="h-5 w-5 mr-2" />}
-                {isEditing ? "Save" : "Edit"}
-              </>
-            )}
+            {isEditing ? <Save className="h-5 w-5 mr-2" /> : <Pencil className="h-5 w-5 mr-2" />}
+            {isEditing ? "Save" : "Edit Basic Info"}
           </button>
+
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Style Info Card */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Style Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["style", "buyer", "season", "versions", "status", "fabrication", "noOfPrinting"].map((field) => (
-              <div key={field} className="flex flex-col">
-                <label className="text-sm font-semibold text-gray-600 mb-1">
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
-                </label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    value={style[field] || ""}
-                    onChange={(e) => setStyle({ ...style, [field]: e.target.value })}
-                  />
-                ) : (
-                  <p className="text-lg text-gray-900">{style[field] || "N/A"}</p>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="mt-4">
-            <label className="text-sm font-semibold text-gray-600 mb-1">Description</label>
-            {isEditing ? (
-              <textarea
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                rows="4"
-                value={style.description || ""}
-                onChange={(e) => setStyle({ ...style, description: e.target.value })}
-              ></textarea>
-            ) : (
-              <p className="text-lg text-gray-900">{style.description || "No description provided."}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Sampling & Production Card */}
-        <div className="lg:col-span-1 space-y-6">
-
-          <div className="bg-white p-6 rounded-xl shadow-md">
-
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Samplings</h3>
-            <ul className="space-y-3">
-              {style.sampling.length > 0 ? (
-                style.sampling.map((obj, idx) => {
-                  const [key, value] = Object.entries(obj)[0];
-                  return (
-                    <li key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <p className="font-medium">
-                        <span className="capitalize">{key.replace(/_/g, ' ')}</span>: {value}
-                      </p>
-                    </li>
-                  );
-                })
-              ) : (
-                <p className="text-gray-500">No samplings recorded.</p>
-              )}
-            </ul>
-          </div>
-
-
-          <div className="bg-white p-6 rounded-xl shadow-md">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Productions</h3>
-            <ul className="space-y-3">
-              {style.prod.length > 0 ? (
-                style.prod.map((obj, idx) => {
-                  const [key, value] = Object.entries(obj)[0];
-                  return (
-                    <li key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <p className="font-medium">
-                        <span className="capitalize">{key.replace(/_/g, ' ')}</span>: {value}
-                      </p>
-                    </li>
-                  );
-                })
-              ) : (
-                <p className="text-gray-500">No productions recorded.</p>
-              )}
-            </ul>
-          </div>
-
-          <button
-            onClick={() => setShowAddForm(prev => !prev)}
-            className="w-full flex items-center justify-center py-2 px-4 bg-amber-600 text-white rounded-lg shadow-md hover:bg-amber-700 transition-all duration-300"
-          >
-            <Eye className="h-5 w-5 mr-2" />
-            {showAddForm ? 'Hide Pattern Release Form' : 'Show Pattern Release Form'}
-          </button>
-
+      <div className="lg:grid lg:grid-cols-2 gap-6">
+        <div className="">
+          <BasicStyleInfo
+            style={style}
+            setStyle={setStyle}
+            isEditing={isEditing}
+          />
+          
           {showAddForm &&
             <AddEditForm
               handleSave={handleSave}
@@ -342,8 +288,10 @@ const StyleDetails = () => {
               getAuthHeaders={getAuthHeaders}
               API_BASE_URL={API_BASE_URL}
             />}
-
         </div>
+
+        <div className=""><SamplingCard style={style} setShowAddForm={setShowAddForm} showAddForm={showAddForm} /></div>
+
       </div>
     </div>
   );

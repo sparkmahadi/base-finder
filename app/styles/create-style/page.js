@@ -111,18 +111,18 @@ export default function StyleBasicForm() {
 
     const payload = {
       ...formData,
-      samplings:
+      sampling:
         selectedSampling === "Add New Sampling"
           ? [{ name: customSamplingName, date: customSamplingDate }]
           : selectedSampling
-          ? [{ name: selectedSampling, date: samplingDate }]
-          : [],
-      productions:
+            ? [{ name: selectedSampling, date: samplingDate }]
+            : [],
+      prod:
         selectedFactory === "Add New Factory"
           ? { factory: customFactoryName }
           : { factory: selectedFactory },
     };
-
+    console.log(payload);
     try {
       const res = await axios.post(`${API_BASE_URL}/styles`, payload, {
         headers: getAuthHeaders(),

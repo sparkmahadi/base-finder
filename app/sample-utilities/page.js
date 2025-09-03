@@ -7,10 +7,11 @@ import Loader from '../components/Loader';
 
 const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities`;
 
-const getAuthHeaders = () => {
-  return {}; // Placeholder for actual auth headers (e.g., { Authorization: `Bearer ${token}` })
-};
-
+  const getAuthHeaders = (() => {
+    const token = localStorage.getItem("token");
+    return { Authorization: `Bearer ${token}` };
+  });
+  
 // --- Confirmation Modal Component ---
 const ConfirmationModal = ({ message, onConfirm, onCancel }) => {
   return (

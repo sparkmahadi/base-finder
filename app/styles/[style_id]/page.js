@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import AddEditForm from "./AddEditForm";
 import { useAuth } from "@/app/context/AuthContext";
-import { ChevronLeft, CloudCog, Eye, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, CloudCog, Eye, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 const StyleDetails = () => {

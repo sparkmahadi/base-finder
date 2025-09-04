@@ -56,6 +56,8 @@ const ExcelUpload = () => {
                 pp_sc: {date: excelDateToISO(row["PP-Screen"])},
                 pro: {date: excelDateToISO(row["PRO"])},
                 pro_sc: {date: excelDateToISO(row["PRO-SCREEN"])},
+                factory_code: row["Factory Code"],
+                factory_name: row["Factory Name"]
             }));
 
             setExcelData(formatted);

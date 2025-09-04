@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Search, Plus, Eye, Trash2, X } from 'lucide-react'; // Import Lucide icons
+import { Search, Plus, Eye, Trash2, X, Download } from 'lucide-react'; // Import Lucide icons
 import Modal from "./Modal";
+import * as XLSX from "xlsx";
 
 export default function Styles() {
   const [data, setData] = useState([]);
@@ -28,6 +29,63 @@ export default function Styles() {
       Authorization: `Bearer ${token}`,
     };
   }, []);
+
+  // Helper: flatten nested objects into key: value
+  const flattenObject = (obj, parentKey = "", res = {}) => {
+    for (let key in obj) {
+      if (!obj.hasOwnProperty(key)) continue;
+      const newKey = parentKey ? `${parentKey}.${key}` : key;
+
+      if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key])) {
+        flattenObject(obj[key], newKey, res); // recurse
+      } else {
+        res[newKey] = obj[key];
+      }
+    }
+    return res;
+  };
+
+  // Mapping: db field → pretty header
+  const headerMap = {
+    season: "Season",
+    style: "Style Code",
+    item: "Item",
+    descr: "Style Description",
+    version: "Version",
+    fabrc: "Fabrication",
+    status: "Style Status",
+    sizes: "Selected Sizes",
+    similar: "Similar Styles",
+    prints: "No. of prints",
+    testingdate: "TESTING",
+    factory_code: "Factory Code",
+    factory_name: "Factory Name",
+  };
+
+
+
+  // ✅ Download all fields dynamically
+  const downloadExcel = () => {
+    const exportData = data.map((item, index) => {
+      const flatItem = flattenObject(item);
+      const renamed = {};
+
+      Object.keys(flatItem).forEach((key) => {
+        // Use decorated name if available, otherwise fallback to key
+        const header = headerMap[key] || key;
+        renamed[header] = flatItem[key];
+      });
+
+      return { SL: index + 1, ...renamed };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Styles");
+    XLSX.writeFile(workbook, "styles_full.xlsx");
+  };
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,6 +136,7 @@ export default function Styles() {
       season: "",
       status: "",
       fabrication: "",
+      factory_name: ""
     });
   };
 
@@ -149,6 +208,13 @@ export default function Styles() {
     <div className="p-8 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-extrabold text-gray-900">Styles Overview ✨</h2>
+        <button
+          onClick={downloadExcel}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
+        >
+          <Download className="mr-2 h-5 w-5" />
+          Download Excel
+        </button>
         <button
           onClick={() => router.push('/styles/create-style')}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
@@ -240,6 +306,23 @@ export default function Styles() {
               ))}
             </select>
           </div>
+
+          <div className="col-span-1">
+            <label htmlFor="factory_name" className="block text-sm font-medium text-gray-700 mb-1">Factory</label>
+            <select
+              id="factory_name"
+              value={filters.factory_name}
+              onChange={(e) => handleFilterChange("factory_name", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Factory</option>
+              {getUniqueValues("factory_name").map((val) => (
+                <option key={val} value={val}>
+                  {val}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         {(search || Object.values(filters).some(f => f)) && (
           <div className="mt-4 text-right">
@@ -274,6 +357,7 @@ export default function Styles() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fabrication</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Versions</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Factory</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -288,9 +372,11 @@ export default function Styles() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.fabric}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.version}</td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {getStatusBadge(item.status)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.factory_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
                         <button

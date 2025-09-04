@@ -151,7 +151,7 @@ const InputSampleForm = () => {
 
   // Function to re-fetch all options (used after adding a new utility item)
   const refetchAllOptions = useCallback(async () => {
-    setLoading(true); // Small local loader while options are refetched
+    setLoading(true); 
     const [categoriesRes, buyersRes, statusesRes, shelfsRes, divisionsRes] = await Promise.allSettled([
       apiFetchCategories(),
       apiFetchBuyers(),

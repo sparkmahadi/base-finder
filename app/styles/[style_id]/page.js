@@ -117,48 +117,6 @@ const StyleDetails = () => {
     }
   };
 
-  // const handleSave = async (payload) => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await axios.post(`${API_BASE_URL}/pattern-release-logs`, payload);
-  //     const data1 = response.data.data;
-  //     const message = response.data.message;
-  //     console.log(data1)
-  //     toast.info(message);
-  //     if (response.data.success) {
-  //       payload.pattern_id = data1._id;
-  //       const newSampling = { ...payload };
-  //       const res2 = await axios.put(`${API_BASE_URL}/styles/update-style-sampling/${style?._id}`, {
-  //         action: "add",
-  //         ...newSampling,
-  //         updated_by: userInfo?.username,
-  //         updated_at: new Date(),
-  //       });
-  //       const data = res2.data;
-  //       if (data.success) {
-  //         toast.info(data.message);
-  //       } else {
-  //         toast.info(data.message)
-  //       }
-  //     }
-  //     // resetForm();
-  //     setShowAddForm(false);
-  //   } catch (error) {
-  //     if (error.response?.status === 409) {
-  //       toast.error(
-  //         "A log with the same Date, Buyer, Style, Category, Body, and Size already exists."
-  //       );
-  //     } else {
-  //       console.error("Error saving log:", error);
-  //       toast.error("Failed to save log.");
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Submit updated info to backend
-
   const handleSave = async (payload) => {
     setLoading(true);
     try {

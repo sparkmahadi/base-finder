@@ -2,11 +2,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { useAuth } from "@/app/context/AuthContext";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function StyleBasicForm() {
   const router = useRouter();
+  const {userInfo} = useAuth();
 
   const [formData, setFormData] = useState({
     buyer: "",
@@ -14,6 +17,7 @@ export default function StyleBasicForm() {
     style: "",
     version: "",
     descr: "",
+    item: "",
     status: "",
     fabric: "",
     prints: "",
@@ -30,6 +34,8 @@ export default function StyleBasicForm() {
 
   // Options
   const [buyerOptions, setBuyerOptions] = useState([]);
+  const [itemOptions, setItemOptions] = useState([]);
+
   const [seasonOptions, setSeasonOptions] = useState(["SS25", "SS26", "FW25"]);
   const [fabricationOptions, setFabricationOptions] = useState([
     "SJ 180gsm",
@@ -42,17 +48,6 @@ export default function StyleBasicForm() {
     "sampling",
   ]);
   const [printingOptions, setPrintingOptions] = useState([0, 1, 2, 3, 4, 5]);
-
-  const samplingOptions = [
-    "Testing",
-    "Fit",
-    "MS",
-    "PP",
-    "Shipment",
-    "Printing",
-    "Add New Sampling",
-  ];
-  const factoryOptions = ["felix", "lingerie", "chistiya", "Add New Factory"];
 
   // Custom fields
   const [customFields, setCustomFields] = useState([]);
@@ -76,8 +71,35 @@ export default function StyleBasicForm() {
     }
   };
 
+  // Existing API calls
+  const apiFetchCategories = async () => {
+    const response = await axios.get(`${API_BASE_URL}/utilities/categories`, {
+      headers: getAuthHeaders(),
+    });
+    if (response.data.success) {
+      const data = response.data.data.map((item) => item.cat_name);
+      setItemOptions(data);
+    } else {
+      toast.info(response.data.message);
+    }
+  };
+
+  const apiFetchStatuses = async () => {
+    const response = await axios.get(`${API_BASE_URL}/utilities/statuses`, {
+      headers: getAuthHeaders(),
+    });
+    if (response.data.success) {
+      const data = response.data.data.map((item) => item.value);
+      setStatusOptions(data);
+    } else {
+      toast.info(response.data.message);
+    }
+  };
+
   useEffect(() => {
     apiFetchBuyers();
+    apiFetchCategories();
+    apiFetchStatuses();
   }, []);
 
   // Handle form field change
@@ -86,15 +108,60 @@ export default function StyleBasicForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Save new option to DB
+  const addNewOption = async (optionType, value) => {
+    if (!value) return;
+
+    let endpoint = "";
+    if (optionType === "buyer") endpoint = "buyers";
+    if (optionType === "item") endpoint = "categories";
+    if (optionType === "status") endpoint = "statuses";
+    if (optionType === "season") endpoint = "seasons";  // depends on your backend
+    if (optionType === "fabrication") endpoint = "fabrications"; // depends on backend
+
+    if (optionType === "item") {
+      try {
+        await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+          cat_name: value, createdBy: userInfo?.username
+        }, {
+          headers: getAuthHeaders(),
+        });
+        console.log(`Saved new ${optionType}: ${value}`);
+      } catch (err) {
+        console.error(`Error saving ${optionType}:`, err);
+        toast.error(`Failed to save new ${optionType} to database.`);
+      }
+    }
+    else {
+      try {
+        await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+          value, createdBy: userInfo?.username
+        }, {
+          headers: getAuthHeaders(),
+        });
+        console.log(`Saved new ${optionType}: ${value}`);
+      } catch (err) {
+        console.error(`Error saving ${optionType}:`, err);
+        toast.error(`Failed to save new ${optionType} to database.`);
+      }
+    }
+  };
+
+
   // Add new dropdown option
-  const handleAddOption = (type) => {
+  const handleAddOption = async (type) => {
     const newOption = prompt(`Enter new ${type}:`);
     if (!newOption) return;
+
+    // Update local state
     if (type === "buyer") setBuyerOptions((prev) => [...prev, newOption]);
     if (type === "season") setSeasonOptions((prev) => [...prev, newOption]);
-    if (type === "fabrication")
-      setFabricationOptions((prev) => [...prev, newOption]);
+    if (type === "fabrication") setFabricationOptions((prev) => [...prev, newOption]);
     if (type === "status") setStatusOptions((prev) => [...prev, newOption]);
+    if (type === "item") setItemOptions((prev) => [...prev, newOption]);
+
+    // Persist to DB
+    await addNewOption(type, newOption);
   };
 
   // Add custom field
@@ -108,6 +175,9 @@ export default function StyleBasicForm() {
   // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    await addNewOption("buyer", formData.buyer);
+    await addNewOption("item", formData.item);
+    await addNewOption("status", formData.status);
 
     const payload = {
       ...formData,
@@ -209,6 +279,34 @@ export default function StyleBasicForm() {
           />
         </div>
 
+        {/* Item */}
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-gray-600 mb-1">item</label>
+          <div className="flex gap-2">
+            <select
+              name="item"
+              value={formData.item}
+              onChange={handleChange}
+              className="border rounded-lg p-2 flex-1"
+            >
+              <option value="">-- Select item --</option>
+              {itemOptions.map((item, idx) => (
+                <option key={idx} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => handleAddOption("item")}
+              className="px-2 bg-green-500 text-white rounded-lg"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+
         {/* Versions */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-600 mb-1">Versions</label>
@@ -290,6 +388,8 @@ export default function StyleBasicForm() {
           </div>
         </div>
 
+
+
         {/* No. of Printing */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-600 mb-1">
@@ -308,77 +408,6 @@ export default function StyleBasicForm() {
               </option>
             ))}
           </select>
-        </div>
-
-        {/* Sampling Section */}
-        <div className="flex flex-col col-span-2 mt-4 border-t pt-4">
-          <h3 className="font-semibold text-gray-700 mb-2">Sampling Actions</h3>
-          <select
-            value={selectedSampling}
-            onChange={(e) => setSelectedSampling(e.target.value)}
-            className="border p-2 rounded mb-2"
-          >
-            <option value="">-- Select Sampling --</option>
-            {samplingOptions.map((s, idx) => (
-              <option key={idx} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-
-          {selectedSampling && selectedSampling !== "Add New Sampling" && (
-            <input
-              type="date"
-              value={samplingDate}
-              onChange={(e) => setSamplingDate(e.target.value)}
-              className="border p-2 rounded"
-            />
-          )}
-
-          {selectedSampling === "Add New Sampling" && (
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Sampling Name"
-                value={customSamplingName}
-                onChange={(e) => setCustomSamplingName(e.target.value)}
-                className="border p-2 rounded flex-1"
-              />
-              <input
-                type="date"
-                value={customSamplingDate}
-                onChange={(e) => setCustomSamplingDate(e.target.value)}
-                className="border p-2 rounded"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Production Section */}
-        <div className="flex flex-col col-span-2 mt-4 border-t pt-4">
-          <h3 className="font-semibold text-gray-700 mb-2">Production Actions</h3>
-          <select
-            value={selectedFactory}
-            onChange={(e) => setSelectedFactory(e.target.value)}
-            className="border p-2 rounded mb-2"
-          >
-            <option value="">-- Select Factory --</option>
-            {factoryOptions.map((f, idx) => (
-              <option key={idx} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-
-          {selectedFactory === "Add New Factory" && (
-            <input
-              type="text"
-              placeholder="Factory Name"
-              value={customFactoryName}
-              onChange={(e) => setCustomFactoryName(e.target.value)}
-              className="border p-2 rounded"
-            />
-          )}
         </div>
 
         {/* Custom Fields */}

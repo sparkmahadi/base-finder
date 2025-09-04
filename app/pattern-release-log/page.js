@@ -102,6 +102,31 @@ const PatternReleaseLog = () => {
     // Refs for auto-focus
     const dateInputRef = useRef(null);
 
+    // NEW API calls for adding utilities (implement these on your backend!)
+    const apiCreateCategory = async (categoryName) => {
+        const response = await axios.post(`${API_BASE_URL}/utilities/categories`, { cat_name: categoryName, status: "active", totalSamples: 0, createdBy: userInfo?.name }, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    };
+
+    const apiCreateBuyer = async (buyerName) => {
+        const response = await axios.post(`${API_BASE_URL}/utilities/buyers`, { value: buyerName, createdBy: userInfo?.name }, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    };
+
+    // Assuming you have an endpoint to add a new status or it's handled implicitly
+    const apiCreateStatus = async (statusName) => {
+        // This might be a more generic utility endpoint or specific to statuses.
+        // For now, assuming it adds it if not exists.
+        const response = await axios.post(`${API_BASE_URL}/utilities/statuses`, { value: statusName, createdBy: userInfo?.name }, {
+            headers: getAuthHeaders(),
+        });
+        return response.data;
+    };
+
     useEffect(() => {
         const loadInitialData = async () => {
             setLoading(true);
@@ -176,22 +201,43 @@ const PatternReleaseLog = () => {
         if (!options.includes(value)) {
             setOptions((prev) => [...prev, value].sort());
 
-            try {
-                await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
-                    value, createdBy: userInfo?.username
-                }, {
-                    headers: getAuthHeaders(),
-                });
-                console.log(`Saved new ${optionType}: ${value}`);
-            } catch (err) {
-                console.error(`Error saving ${optionType}:`, err);
-                toast.error(`Failed to save new ${optionType} to database.`);
+            if (optionType === "category") {
+                try {
+                    await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+                        cat_name:value, createdBy: userInfo?.username
+                    }, {
+                        headers: getAuthHeaders(),
+                    });
+                    console.log(`Saved new ${optionType}: ${value}`);
+                } catch (err) {
+                    console.error(`Error saving ${optionType}:`, err);
+                    toast.error(`Failed to save new ${optionType} to database.`);
+                }
+            }
+            else {
+                try {
+                    await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+                        value, createdBy: userInfo?.username
+                    }, {
+                        headers: getAuthHeaders(),
+                    });
+                    console.log(`Saved new ${optionType}: ${value}`);
+                } catch (err) {
+                    console.error(`Error saving ${optionType}:`, err);
+                    toast.error(`Failed to save new ${optionType} to database.`);
+                }
             }
         }
     };
 
     const handleSave = async (payload) => {
         setLoading(true);
+
+        // Ensure custom values get added to utilities before saving log
+        await addNewOption("buyer", payload.buyer);
+        await addNewOption("category", payload.item);
+        await addNewOption("status", payload.status);
+
         try {
             const response = editingLogId
                 ? await axios.put(`${API_BASE_URL}/pattern-release-logs/${editingLogId}`, payload)

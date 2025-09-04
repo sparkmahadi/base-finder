@@ -248,7 +248,9 @@ const StyleDetails = () => {
             />}
         </div>
 
-        <div className=""><SamplingCard style={style} setShowAddForm={setShowAddForm} showAddForm={showAddForm} /></div>
+        <div className="">
+          <SamplingCard style={style} setShowAddForm={setShowAddForm} showAddForm={showAddForm} />
+          </div>
 
       </div>
     </div>

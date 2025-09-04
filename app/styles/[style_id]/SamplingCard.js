@@ -1,3 +1,4 @@
+import PatternDetailsModal from "@/app/components/PatternDetailsModal";
 import { useAuth } from "@/app/context/AuthContext";
 import axios from "axios";
 import { Eye, Trash2, Plus, Minus, Pencil } from "lucide-react";
@@ -7,7 +8,12 @@ import { toast } from "react-toastify";
 const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) => {
     const { userInfo } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
-    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, ...relevantFields } = style;
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalPattern, setModalPattern] = useState(null);
+
+
+    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, productionRecords, ...relevantFields } = style;
     const [editedStyle, setEditedStyle] = useState({ ...relevantFields });
     const [newActivityKey, setNewActivityKey] = useState("");
     const [newActivityDate, setNewActivityDate] = useState("");
@@ -118,6 +124,36 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
         }
     };
 
+
+    const handleViewPattern = async (patternId) => {
+        console.log(patternId);
+        try {
+            // Check if patternId is available
+            if (!patternId) {
+                toast.error("No pattern ID available.");
+                return;
+            }
+
+            const res = await axios.get(`${API_BASE_URL}/pattern-release-logs/get-pattern-by-id/${patternId}`);
+
+            if (res.data.success) {
+                setModalPattern(res.data.data);
+                setIsModalOpen(true);
+            } else {
+                toast.error(res.data.message || "Failed to fetch pattern details.");
+            }
+        } catch (error) {
+            console.error("Error fetching pattern:", error);
+            toast.error("Failed to fetch pattern details.");
+        }
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setModalPattern(null);
+    };
+
+
     return (
         <div className="bg-white p-6 rounded-xl shadow-md">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Style Activities</h3>
@@ -137,11 +173,20 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                                         typeof value === "object" ? (
                                             <div className="text-sm text-gray-600 space-y-1">
                                                 {Object.entries(value).map(([subKey, subValue]) => (
-                                                    <p key={subKey}>
-                                                        {subKey.replace(/_/g, " ")}: {subValue || "-"}
-                                                        {subKey === "pattern_id" &&
-                                                            <button>View Pattern</button>}
-                                                    </p>
+                                                    <>
+                                                        {/* Inside the first loop for displaying activities */}
+                                                        <p key={subKey}>
+                                                            {subKey.replace(/_/g, " ")}: {subValue || "-"}
+                                                            {subKey === "pattern_id" && subValue && (
+                                                                <button
+                                                                    onClick={() => handleViewPattern(subValue)}
+                                                                    className="ml-2 text-sm text-blue-600 hover:underline"
+                                                                >
+                                                                    View Pattern
+                                                                </button>
+                                                            )}
+                                                        </p>
+                                                    </>
                                                 ))}
                                             </div>
                                         ) : (
@@ -272,6 +317,15 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                     Edit Activity Info
                 </button>
             </div>
+
+            {/* At the end of the return statement, before the closing </div> */}
+            <PatternDetailsModal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                pattern={modalPattern}
+            />
+
+
         </div>
     );
 };

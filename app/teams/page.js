@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
 
 export default function TeamsManager() {
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -25,20 +26,12 @@ export default function TeamsManager() {
     members: [], // will contain objects like { user_id, username, role }
   });
 
-  const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : null;
-  }
-  return null;
-};
-
   // Fetch teams
   const fetchTeams = async () => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await axios.get(API_URL, {headers: getAuthToken()});
+      const { data } = await axios.get(API_URL, {headers: getAuthHeaders()});
       setTeams(data.data || []);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -49,7 +42,7 @@ export default function TeamsManager() {
   // Fetch users for selection
   const fetchUsers = async () => {
     try {
-      const { data } = await axios.get(USERS_API_URL, {headers: getAuthToken()});
+      const { data } = await axios.get(USERS_API_URL, {headers: getAuthHeaders()});
       setUsers(data || []);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -59,7 +52,7 @@ export default function TeamsManager() {
   // Fetch buyers for selection
   const fetchBuyers = async () => {
     try {
-      const { data } = await axios.get(BUYERS_API_URL, {headers: getAuthToken()});
+      const { data } = await axios.get(BUYERS_API_URL, {headers: getAuthHeaders()});
       console.log(data);
       setBuyers(data.data || []);
     } catch (err) {

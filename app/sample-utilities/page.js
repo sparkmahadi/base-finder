@@ -125,15 +125,14 @@ export default function UtilityManager() {
       }
 
       if (utilityType === 'category') {
-        if (!inputValue.trim() || !categoryStatus.trim() || categoryTotalSamples === '' || categoryTotalSamples === null || categoryTotalSamples === undefined) {
-          setMessage({ text: 'Category name, status, and total samples are required.', type: 'error' });
+        if (!inputValue.trim()) {
+          setMessage({ text: 'inputValue is wrong', type: 'error' });
           return;
         }
         endpoint = `${API_BASE_URL}/categories`; // Assuming categories has its own /categories endpoint
         payload = {
           cat_name: inputValue.trim(),
-          status: categoryStatus.trim(),
-          totalSamples: Number(categoryTotalSamples),
+          user_team: userInfo?.team,
           createdBy: createdBy,
           utility_type: utilityType,
         };
@@ -308,26 +307,6 @@ export default function UtilityManager() {
               disabled={loading}
             />
 
-            {utilityType === 'category' && (
-              <>
-                <input
-                  type="text"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-gray-800"
-                  placeholder="Enter category status (e.g., active, inactive)"
-                  value={categoryStatus}
-                  onChange={(e) => setCategoryStatus(e.target.value)}
-                  disabled={loading}
-                />
-                <input
-                  type="number"
-                  className="p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-gray-800"
-                  placeholder="Enter total samples"
-                  value={categoryTotalSamples}
-                  onChange={(e) => setCategoryTotalSamples(e.target.value)}
-                  disabled={loading}
-                />
-              </>
-            )}
 
             <div className="flex gap-4">
               <button

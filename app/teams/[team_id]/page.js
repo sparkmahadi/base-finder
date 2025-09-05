@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import TeamDetails from "@/app/components/TeamDetails"; // adjust path as needed
+import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
 
 export default function TeamPage() {
     const { team_id: teamId } = useParams();
@@ -24,9 +25,9 @@ export default function TeamPage() {
             setError("");
             try {
                 const [teamRes, buyersRes, usersRes] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/teams/${teamId}`),
-                    axios.get(`${API_BASE_URL}/utilities/buyers`),
-                    axios.get(`${API_BASE_URL}/users`),
+                    axios.get(`${API_BASE_URL}/teams/${teamId}`, {headers: getAuthHeaders()}),
+                    axios.get(`${API_BASE_URL}/utilities/buyers`, {headers: getAuthHeaders()}),
+                    axios.get(`${API_BASE_URL}/users`, {headers: getAuthHeaders()}),
                 ]);
                 setTeam(teamRes.data.data);
                 setBuyersList(buyersRes.data.data || []);

@@ -27,15 +27,6 @@ function formatDate(dateString) {
     return 'Invalid Date';
   }
 }
-async function getSampleData(sampleId) {
-  try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${sampleId}`);
-    return { sample: res.data.sample, error: null };
-  } catch (error) {
-    console.error("Error fetching sample details on server:", error);
-    return { sample: null, error: "Failed to load sample details. Please try again." };
-  }
-}
 
 export default function SampleDetails({ initialSampleData }) { // Receive initial data as a prop
   const { sample_id: currentSampleId } = useParams();
@@ -122,7 +113,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     setDivisionalSamplesLoading(true);
     setDivisionalSamples([]); // Clear previous data
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/get-by-shelf-and-division?shelf=${shelf}&division=${division}`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/get-by-shelf-and-division?shelf=${shelf}&division=${division}`, {headers: getAuthHeaders()});
       const samplesData = res?.data?.samples;
       if (samplesData && samplesData.length > 0) {
         const sortedSamplesData = samplesData.sort((a, b) => {

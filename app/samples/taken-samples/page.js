@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/app/context/AuthContext";
 import TakenSampleListRow from "./TakenSampleListRow";
 import Loader from "@/app/components/Loader";
+import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
 
 const TakenSamplesList = () => {
   const { isAuthenticated, userInfo } = useAuth();
@@ -21,8 +22,13 @@ const TakenSamplesList = () => {
   const fetchSamples = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`);
-      setSamples(res.data.samples);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`, {headers: getAuthHeaders()});
+      if (res.data.success) {
+        setSamples(res.data.samples);
+        toast.success(res.data.message);
+      } else {
+        toast.info(res.data.message);
+      }
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch samples:", err);

@@ -204,12 +204,12 @@ const StyleDetails = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleSearchClick = useCallback((styleCode) => {
+  const handleSearchClick = ((styleCode) => {
     setSearchTerm(styleCode);
     setShowSearchForm(true);
-    handleSearchSample(searchTerm);
+    handleSearchSample(styleCode);
 
-  }, [searchTerm]);
+  });
 
   const tableHeadings = useMemo(() => [ // Memoize this array as well
     { label: "SL" },
@@ -220,16 +220,10 @@ const StyleDetails = () => {
     { label: "Shelf", key: "shelf" },
     { label: "Division", key: "division" },
     { label: "Position", key: "position" },
-    { label: "Availability", key: "availability" },
     { label: "Status", key: "status" },
+    { label: "Availability", key: "availability" },
+    { label: "Last Purpose", key: "last_purpose" },
     { label: "Added by", key: "added_by" },
-    { label: "Taken By", key: "taken_by" }, // Add these if you want them in export
-    { label: "Purpose", key: "purpose" },
-    { label: "Taken At", key: "taken_at" },
-    { label: "Returned By", key: "returned_by" },
-    { label: "Return Purpose", key: "return_purpose" },
-    { label: "Returned At", key: "returned_at" },
-    // { label: "Actions" }, // Exclude Actions from export
   ], []);
 
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
@@ -302,57 +296,79 @@ const StyleDetails = () => {
           <SamplingCard style={style} setShowAddForm={setShowAddForm} showAddForm={showAddForm} />
         </div>
 
-        <button
-          onClick={() => handleSearchClick(style.style)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-md text-base transition-colors duration-200 shadow-sm hover:shadow-md flex-grow md:flex-grow-0"
-          disabled={isSearching}
-        >
-          {isSearching ? "Searching..." : "Search"}
-        </button>
 
-
-        {
-          showSearchForm &&
-          <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <input
-              type="text"
-              placeholder="Search by style, category, or added by..."
-              className="border border-gray-300 p-2.5 rounded-md w-full md:flex-1 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") handleSearchClick();
-              }}
-              aria-label="Search samples"
-            />
-
-            <div>
-              {samples?.length > 0 ? (
-                samples.map((sample, idx) => (
-                  <SampleListRow
-                    key={sample._id}
-                    sample={sample}
-                    index={idx}
-                    userRole={userInfo?.role}
-                    userInfo={userInfo}
-                    handleDelete={handleDelete}
-                    handleTake={(id, purpose) => handleTake(id, purpose, userInfo)}
-                    handlePutBack={(sampleId, newPosition, returnPurpose) => handlePutBack(sampleId, newPosition, returnPurpose, userInfo)}
-                  />
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={tableHeadings.length + 1} className="text-center p-6 text-gray-500 text-base"> {/* +1 for the Actions column */}
-                    No samples found matching your criteria.
-                  </td>
-                </tr>
-              )}
-
-            </div>
-          </div>
-
-        }
       </div>
+
+      <button
+        onClick={() => handleSearchClick(style.style)}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-md text-base transition-colors duration-200 shadow-sm hover:shadow-md flex-grow md:flex-grow-0"
+        disabled={isSearching}
+      >
+        {isSearching ? "Searching..." : "Search the Sample"}
+      </button>
+
+
+      {
+        showSearchForm &&
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <input
+            type="text"
+            placeholder="Search by style, category, or added by..."
+            className="border border-gray-300 p-2.5 rounded-md w-full md:flex-1 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") handleSearchClick(e.target.value);
+            }}
+            aria-label="Search samples"
+          />
+
+          <div>
+            <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
+              <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
+                <tr>
+                  {/* Only render table headings for display, not necessarily all export fields */}
+                  {tableHeadings.map(({ label, key }, idx) => (
+                    <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
+                      <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
+                        <span className="font-semibold truncate">{label}</span>
+                      </div>
+                    </th>
+                  ))}
+                  {/* Add a specific Actions column heading back for display */}
+                  <th className="px-3 py-3 border-b-2 border-gray-200 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {samples?.length > 0 ? (
+                  samples.map((sample, idx) => (
+                    <SampleListRow
+                      key={sample._id}
+                      sample={sample}
+                      index={idx}
+                      userRole={userInfo?.role}
+                      userInfo={userInfo}
+                      handleDelete={handleDelete}
+                      handleTake={(id, purpose) => handleTake(id, purpose, userInfo)}
+                      handlePutBack={(sampleId, newPosition, returnPurpose) => handlePutBack(sampleId, newPosition, returnPurpose, userInfo)}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={tableHeadings.length + 1} className="text-center p-6 text-gray-500 text-base"> {/* +1 for the Actions column */}
+                      No samples found matching your criteria.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+
+      }
+
+
     </div>
   );
 };

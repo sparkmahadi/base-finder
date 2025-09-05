@@ -4,7 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 export const useSampleData = (initialSamples) => {
-  const [samples, setSamples] = useState(initialSamples);
+  const [samples, setSamples] = useState([]);
   const [isLoading, setIsLoading] = useState(!initialSamples.length); // General loading for initial fetch
   const [isMutating, setIsMutating] = useState(false); // For delete, take, put back actions
   const [isSearching, setIsSearching] = useState(false); // For search/filter operations

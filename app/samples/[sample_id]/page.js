@@ -8,6 +8,7 @@ import React, { useState, useEffect, useCallback } from 'react'; // Added useCal
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal';
 import SampleListRow from '../components/SampleListRow';
+import { getAuthHeaders } from '@/app/utils/getAuthHeaders';
 
 // Helper function to format dates - Can be a utility or moved out if used broadly
 function formatDate(dateString) {
@@ -75,13 +76,21 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
         setLoading(true);
         setError(null);
         try {
-          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`);
-          setSample(res?.data?.sample);
-          toast.success("Sample details loaded successfully!");
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`, {
+            headers: getAuthHeaders(),
+          });
+          if (res.data.success) {
+            setSample(res?.data?.sample);
+            toast.success("Sample details loaded successfully!");
+          }
+          else {
+            setError(res.data.message || "Error fetching sample details. Please try again.");
+            toast.error(res.data.message || "Failed to fetch sample details.");
+          }
         } catch (err) {
           console.error("Error fetching from regular samples:", err);
-          setError("Error fetching sample details. Please try again.");
-          toast.error("Failed to fetch sample details.");
+          setError(res.data.message || "Error fetching sample details. Please try again.");
+          toast.error(res.data.message || "Failed to fetch sample details.");
           setSample(null);
         } finally {
           setLoading(false);
@@ -89,22 +98,22 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
       };
       fetchSampleOnClient();
     } else if (refetchTrigger > 0) { // Re-fetch on trigger for updates
-        const reFetchSample = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-              const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`);
-              setSample(res?.data?.sample);
-              toast.success("Sample details updated!");
-            } catch (err) {
-              console.error("Error re-fetching sample:", err);
-              setError("Error updating sample details. Please try again.");
-              toast.error("Failed to re-fetch sample details.");
-            } finally {
-                setLoading(false);
-            }
+      const reFetchSample = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/${currentSampleId}`);
+          setSample(res?.data?.sample);
+          toast.success("Sample details updated!");
+        } catch (err) {
+          console.error("Error re-fetching sample:", err);
+          setError("Error updating sample details. Please try again.");
+          toast.error("Failed to re-fetch sample details.");
+        } finally {
+          setLoading(false);
         }
-        reFetchSample();
+      }
+      reFetchSample();
     }
   }, [currentSampleId, refetchTrigger, initialSampleData]); // Add initialSampleData to dependency array
 
@@ -348,10 +357,10 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
       if (data?.success) {
         toast.success(data?.message || "Division normalized successfully!");
         if (data?.normalizedFieldsUpdated > 0) {
-            toast.success(`Total fields normalized: ${data?.normalizedFieldsUpdated}`);
+          toast.success(`Total fields normalized: ${data?.normalizedFieldsUpdated}`);
         }
         if (data?.positionsRenumbered > 0) {
-            toast.success(`Total positions renumbered: ${data?.positionsRenumbered}`);
+          toast.success(`Total positions renumbered: ${data?.positionsRenumbered}`);
         }
         fetchSamplesInDivision(shelf, division); // Re-fetch divisional samples to reflect changes
       } else {
@@ -463,7 +472,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
             <h2 className="text-2xl font-bold text-gray-700 mb-4">
               {isEditing ? 'Edit Sample Information' : 'General Information'}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
               {editableFields.map((field) => (
                 <div key={field.key} className="flex flex-col">
                   <label className="text-sm font-medium text-gray-600 mb-1 capitalize">
@@ -698,52 +707,52 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
       {/* Side Division for Other Samples */}
       {showOtherSamplesInDivision && (
         <div className="p-8 max-w-2xl w-full bg-white shadow-xl rounded-lg ml-8 self-start sticky top-8">
-            <h2 className="text-2xl font-extrabold text-gray-800 mb-6 border-b pb-4">
-                Samples in Division {sample?.shelf}-{sample?.division}
-            </h2>
-            {divisionalSamplesLoading ? (
-                <Loader message="Loading other samples in this division..." />
-            ) : divisionalSamples.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
-                        <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
-                            <tr>
-                                {tableHeadings?.map(({ label, key }, idx) => (
-                                    <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
-                                        <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
-                                            <span className="font-semibold truncate">{label}</span>
-                                        </div>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {divisionalSamples.map((divSample, idx) => (
-                                <SampleListRow
-                                    key={divSample._id}
-                                    sample={divSample}
-                                    index={idx}
-                                    userRole={userInfo?.role}
-                                    userInfo={userInfo}
-                                    // You might need to adjust these handlers if they interact directly with `currentSampleId`
-                                    // For simplicity, using the original handlers here, but ensure they handle the correct sample ID
-                                    handleDelete={() => handleConfirmDeleteForDivisional(divSample._id)}
-                                    handleTake={(id, purpose) => handleConfirmTakeForDivisional(id, purpose)}
-                                    handlePutBack={(id, newPosition) => handleConfirmPutBackForDivisional(id, newPosition)}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                <p className="text-gray-500 italic">No other samples found in this division.</p>
-            )}
-            <button
-                onClick={() => setShowOtherSamplesInDivision(false)}
-                className="mt-6 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
-            >
-                Hide Division Samples
-            </button>
+          <h2 className="text-2xl font-extrabold text-gray-800 mb-6 border-b pb-4">
+            Samples in Division {sample?.shelf}-{sample?.division}
+          </h2>
+          {divisionalSamplesLoading ? (
+            <Loader message="Loading other samples in this division..." />
+          ) : divisionalSamples.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse text-sm text-center whitespace-nowrap">
+                <thead className="bg-gray-100 text-xs text-gray-700 uppercase">
+                  <tr>
+                    {tableHeadings?.map(({ label, key }, idx) => (
+                      <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
+                        <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">
+                          <span className="font-semibold truncate">{label}</span>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {divisionalSamples.map((divSample, idx) => (
+                    <SampleListRow
+                      key={divSample._id}
+                      sample={divSample}
+                      index={idx}
+                      userRole={userInfo?.role}
+                      userInfo={userInfo}
+                      // You might need to adjust these handlers if they interact directly with `currentSampleId`
+                      // For simplicity, using the original handlers here, but ensure they handle the correct sample ID
+                      handleDelete={() => handleConfirmDeleteForDivisional(divSample._id)}
+                      handleTake={(id, purpose) => handleConfirmTakeForDivisional(id, purpose)}
+                      handlePutBack={(id, newPosition) => handleConfirmPutBackForDivisional(id, newPosition)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 italic">No other samples found in this division.</p>
+          )}
+          <button
+            onClick={() => setShowOtherSamplesInDivision(false)}
+            className="mt-6 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-200 ease-in-out"
+          >
+            Hide Division Samples
+          </button>
         </div>
       )}
 

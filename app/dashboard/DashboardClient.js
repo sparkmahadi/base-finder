@@ -50,6 +50,12 @@ const DashboardClient = ({
       link: '/sample-categories',
       value: categories?.length,
     },
+        {
+      title: "Styles",
+      icon: <PenToolIcon className="h-6 w-6 text-purple-500" />,
+      link: '/styles/',
+      value: 'N/A',
+    },
   ];
 
   const adminStats = [
@@ -99,12 +105,6 @@ const DashboardClient = ({
       title: "Activities",
       icon: <PenToolIcon className="h-6 w-6 text-purple-500" />,
       link: '/activities/',
-      value: 'N/A',
-    },
-    {
-      title: "Styles",
-      icon: <PenToolIcon className="h-6 w-6 text-purple-500" />,
-      link: '/styles/',
       value: 'N/A',
     },
   ];

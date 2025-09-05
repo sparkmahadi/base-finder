@@ -18,6 +18,7 @@ const SampleListRow = ({
   userInfo,
 }) => {
   const router = useRouter();
+  console.log("sample", sample);
   const [isTakeModalOpen, setIsTakeModalOpen] = useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
   const [purpose, setPurpose] = useState("");
@@ -120,12 +121,13 @@ const SampleListRow = ({
         {renderTd("shelf", sample?.shelf, "font-semibold")}
         {renderTd("division", sample?.division, "font-semibold")}
         {renderTd("position", sample?.position, "font-semibold")}
+        {renderTd("status", sample?.status)}
         {renderTd("availability", sample?.availability === "no" ? (
           <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Taken / N/A</span>
         ) : (
           <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Available</span>
         ))}
-        {renderTd("status", sample?.status)}
+        {renderTd("status", sample?.last_purpose)}
         {renderTd("added_by", sample?.added_by)}
 
         <td className="py-3 px-3 border border-gray-200">

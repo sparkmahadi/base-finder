@@ -62,6 +62,7 @@ const SampleListClient = () => {
     position: "All",
     availability: "All",
     status: "All",
+    last_purpose: "All",
     added_by: "All",
   });
 
@@ -92,6 +93,7 @@ const SampleListClient = () => {
       position: getUniqueAndSorted("position", "number"),
       availability: getUniqueAndSorted("availability"),
       status: getUniqueAndSorted("status"),
+      last_purpose: getUniqueAndSorted("last_purpose"),
       added_by: getUniqueAndSorted("added_by"),
     };
   }, [samples]);
@@ -113,6 +115,7 @@ const SampleListClient = () => {
       position: "All",
       availability: "All",
       status: "All",
+      last_purpose: "All",
       added_by: "All",
     });
     refreshSamples();
@@ -123,49 +126,49 @@ const SampleListClient = () => {
     handleSearchSample(searchTerm)
   }, [searchTerm]);
 
-const filteredSamples = useMemo(() => {
-  return samples
-    ?.filter((sample) => {
-      const matchesSearch =
-        sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredSamples = useMemo(() => {
+    return samples
+      ?.filter((sample) => {
+        const matchesSearch =
+          sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesFilters = Object.entries(filters).every(([key, value]) => {
-        if (value === "All" || !value.trim()) return true;
-        return String(sample[key]).toLowerCase().includes(value.toLowerCase());
+        const matchesFilters = Object.entries(filters).every(([key, value]) => {
+          if (value === "All" || !value.trim()) return true;
+          return String(sample[key]).toLowerCase().includes(value.toLowerCase());
+        });
+
+        if (userInfo?.role === "admin") {
+          // Admin: must satisfy both search + filters
+          return matchesSearch && matchesFilters;
+        } else {
+          // Non-admin: only filters matter
+          return matchesFilters;
+        }
+      })
+      .sort((a, b) => {
+        const shelfA = parseFloat(a.shelf);
+        const shelfB = parseFloat(b.shelf);
+        if (!isNaN(shelfA) && !isNaN(shelfB) && shelfA !== shelfB) {
+          return shelfA - shelfB;
+        }
+
+        const divA = parseFloat(a.division);
+        const divB = parseFloat(b.division);
+        if (!isNaN(divA) && !isNaN(divB) && divA !== divB) {
+          return divA - divB;
+        }
+
+        const posA = parseFloat(a.position);
+        const posB = parseFloat(b.position);
+        if (!isNaN(posA) && !isNaN(posB) && posA !== posB) {
+          return posA - posB;
+        }
+
+        return 0;
       });
-
-      if (userInfo?.role === "admin") {
-        // Admin: must satisfy both search + filters
-        return matchesSearch && matchesFilters;
-      } else {
-        // Non-admin: only filters matter
-        return matchesFilters;
-      }
-    })
-    .sort((a, b) => {
-      const shelfA = parseFloat(a.shelf);
-      const shelfB = parseFloat(b.shelf);
-      if (!isNaN(shelfA) && !isNaN(shelfB) && shelfA !== shelfB) {
-        return shelfA - shelfB;
-      }
-
-      const divA = parseFloat(a.division);
-      const divB = parseFloat(b.division);
-      if (!isNaN(divA) && !isNaN(divB) && divA !== divB) {
-        return divA - divB;
-      }
-
-      const posA = parseFloat(a.position);
-      const posB = parseFloat(b.position);
-      if (!isNaN(posA) && !isNaN(posB) && posA !== posB) {
-        return posA - posB;
-      }
-
-      return 0;
-    });
-}, [samples, searchTerm, filters, userInfo?.role]);
+  }, [samples, searchTerm, filters, userInfo?.role]);
 
 
   const tableHeadings = useMemo(() => [ // Memoize this array as well
@@ -177,11 +180,11 @@ const filteredSamples = useMemo(() => {
     { label: "Shelf", key: "shelf" },
     { label: "Division", key: "division" },
     { label: "Position", key: "position" },
-    { label: "Availability", key: "availability" },
     { label: "Status", key: "status" },
+    { label: "Availability", key: "availability" },
+    { label: "Last Purpose", key: "last_purpose" },
     { label: "Added by", key: "added_by" },
     { label: "Taken By", key: "taken_by" }, // Add these if you want them in export
-    { label: "Purpose", key: "purpose" },
     { label: "Taken At", key: "taken_at" },
     { label: "Returned By", key: "returned_by" },
     { label: "Return Purpose", key: "return_purpose" },
@@ -300,7 +303,7 @@ const filteredSamples = useMemo(() => {
             <tr>
               {/* Only render table headings for display, not necessarily all export fields */}
               {tableHeadings
-                .filter(heading => heading.label !== "Taken By" && heading.label !== "Purpose" && heading.label !== "Taken At" && heading.label !== "Returned By" && heading.label !== "Return Purpose" && heading.label !== "Returned At") // Exclude these from display if you don't want them
+                .filter(heading => heading.label !== "Taken By" && heading.label !== "Taken At" && heading.label !== "Returned By" && heading.label !== "Return Purpose" && heading.label !== "Returned At") // Exclude these from display if you don't want them
                 .map(({ label, key }, idx) => (
                   <th key={idx} className="px-3 py-3 border-b-2 border-gray-200 font-semibold lg:max-w-32">
                     <div className="flex flex-col gap-1 items-center justify-center lg:max-w-32">

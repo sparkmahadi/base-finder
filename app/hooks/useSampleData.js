@@ -16,13 +16,12 @@ export const useSampleData = (initialSamples) => {
     setIsLoading(true); // General loading for refresh
     try {
       const res = await axios.get(`${API_BASE_URL}/samples`, {
-        params: { search: searchTerm }, // Pass search term for refresh too
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("searched sample", searchTerm, "got", res?.data.samples)
       setSamples(res.data.samples || []);
-      if(res.data?.message){
-          toast.success(res.data?.message);
+      if (res.data?.message) {
+        toast.success(res.data?.message);
       }
       if (searchTerm && (!res.data.samples || res.data.samples.length === 0)) {
         toast.info("No matching samples found for your search term.");
@@ -120,6 +119,31 @@ export const useSampleData = (initialSamples) => {
     }
   }, [API_BASE_URL, refreshSamples]);
 
+  const handleSearchSample = async (searchTerm) => {
+    setIsSearching(true);
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}/samples/search/${searchTerm}`,
+        {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      console.log(res);
+      if (res.data?.success) {
+        toast.success(res.data.message);
+        setSamples(res.data.data)
+      } else {
+        toast.error(res.data?.message || "No Such sample found.");
+        setSamples([]);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "An unexpected error occurred while searching the sample.");
+      console.error("Search API call failed:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
   return {
     samples,
     isLoading,
@@ -129,6 +153,7 @@ export const useSampleData = (initialSamples) => {
     handleDelete,
     handleTake,
     handlePutBack,
-    setIsSearching, // Expose to allow the component to set this for search operations
+    handleSearchSample,
+    setIsSearching,
   };
 };

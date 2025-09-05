@@ -31,6 +31,7 @@ const StyleDetails = () => {
     handleDelete,
     handleTake,
     handlePutBack,
+    handleSearchSample,
     setIsSearching,
   } = useSampleData([]);
 
@@ -206,10 +207,8 @@ const StyleDetails = () => {
   const handleSearchClick = useCallback((styleCode) => {
     setSearchTerm(styleCode);
     setShowSearchForm(true);
-    setIsSearching(true);
-    refreshSamples(searchTerm).finally(() => {
-      setIsSearching(false);
-    });
+    handleSearchSample(searchTerm);
+
   }, [searchTerm]);
 
   const tableHeadings = useMemo(() => [ // Memoize this array as well

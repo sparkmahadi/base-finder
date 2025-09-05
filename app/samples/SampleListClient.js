@@ -45,6 +45,7 @@ const SampleListClient = () => {
     handleDelete,
     handleTake,
     handlePutBack,
+    handleSearchSample,
     setIsSearching,
   } = useSampleData([]);
 
@@ -119,47 +120,53 @@ const SampleListClient = () => {
 
   const handleSearchClick = useCallback(() => {
     setIsSearching(true);
-    refreshSamples(searchTerm).finally(() => {
-      setIsSearching(false);
-    });
-  }, [searchTerm, refreshSamples, setIsSearching]);
+    handleSearchSample(searchTerm)
+  }, [searchTerm]);
 
-  const filteredSamples = useMemo(() => {
-    return samples
-      ?.filter((sample) => {
-        const matchesSearch =
-          sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
+const filteredSamples = useMemo(() => {
+  return samples
+    ?.filter((sample) => {
+      const matchesSearch =
+        sample.style?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sample.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sample.added_by?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesFilters = Object.entries(filters).every(([key, value]) => {
-          if (value === "All" || !value.trim()) return true;
-          return String(sample[key]).toLowerCase().includes(value.toLowerCase());
-        });
-        return matchesSearch && matchesFilters;
-      })
-      .sort((a, b) => {
-        const shelfA = parseFloat(a.shelf);
-        const shelfB = parseFloat(b.shelf);
-        if (!isNaN(shelfA) && !isNaN(shelfB) && shelfA !== shelfB) {
-          return shelfA - shelfB;
-        }
-
-        const divA = parseFloat(a.division);
-        const divB = parseFloat(b.division);
-        if (!isNaN(divA) && !isNaN(divB) && divA !== divB) {
-          return divA - divB;
-        }
-
-        const posA = parseFloat(a.position);
-        const posB = parseFloat(b.position);
-        if (!isNaN(posA) && !isNaN(posB) && posA !== posB) {
-          return posA - posB;
-        }
-
-        return 0;
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (value === "All" || !value.trim()) return true;
+        return String(sample[key]).toLowerCase().includes(value.toLowerCase());
       });
-  }, [samples, searchTerm, filters]);
+
+      if (userInfo?.role === "admin") {
+        // Admin: must satisfy both search + filters
+        return matchesSearch && matchesFilters;
+      } else {
+        // Non-admin: only filters matter
+        return matchesFilters;
+      }
+    })
+    .sort((a, b) => {
+      const shelfA = parseFloat(a.shelf);
+      const shelfB = parseFloat(b.shelf);
+      if (!isNaN(shelfA) && !isNaN(shelfB) && shelfA !== shelfB) {
+        return shelfA - shelfB;
+      }
+
+      const divA = parseFloat(a.division);
+      const divB = parseFloat(b.division);
+      if (!isNaN(divA) && !isNaN(divB) && divA !== divB) {
+        return divA - divB;
+      }
+
+      const posA = parseFloat(a.position);
+      const posB = parseFloat(b.position);
+      if (!isNaN(posA) && !isNaN(posB) && posA !== posB) {
+        return posA - posB;
+      }
+
+      return 0;
+    });
+}, [samples, searchTerm, filters, userInfo?.role]);
+
 
   const tableHeadings = useMemo(() => [ // Memoize this array as well
     { label: "SL" },
@@ -255,7 +262,7 @@ const SampleListClient = () => {
           className="border border-gray-300 p-2.5 rounded-md w-full md:flex-1 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={(e) => {
+          onKeyDown={(e) => {
             if (e.key === "Enter") handleSearchClick();
           }}
           aria-label="Search samples"

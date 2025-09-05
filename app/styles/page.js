@@ -64,7 +64,7 @@ export default function Styles() {
 
 
 
-  // ✅ Download all fields dynamically
+  // Download all fields dynamically
   const downloadExcel = () => {
     const exportData = data.map((item, index) => {
       const flatItem = flattenObject(item);
@@ -176,7 +176,10 @@ export default function Styles() {
   const getStatusBadge = (status) => {
     const statusMap = {
       active: "bg-green-500",
-      inactive: "bg-gray-500",
+      sampling: "bg-green-500",
+      producing: "bg-green-500",
+      closed: "bg-orange-800",
+      cancelled: "bg-gray-500",
       pending: "bg-yellow-500",
     };
     const colorClass = statusMap[status?.toLowerCase()] || "bg-gray-500";

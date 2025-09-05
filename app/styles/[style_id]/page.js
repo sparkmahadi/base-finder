@@ -1,13 +1,15 @@
 "use client";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import AddEditForm from "./AddEditForm";
 import { useAuth } from "@/app/context/AuthContext";
-import { ChevronLeft, Pencil, Save, X } from "lucide-react";
+import { ChevronLeft, CloudCog, Pencil, Save, X } from "lucide-react";
 import { toast } from "react-toastify";
 import BasicStyleInfo from "./BasicStyleInfo";
 import SamplingCard from "./SamplingCard";
+import { useSampleData } from "@/app/hooks/useSampleData";
+import SampleListRow from "@/app/samples/components/SampleListRow";
 
 const StyleDetails = () => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -15,9 +17,23 @@ const StyleDetails = () => {
   const { userInfo, loading: authLoading } = useAuth();
   const router = useRouter();
   const [style, setStyle] = useState(null);
+  console.log("style", style);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  const {
+    samples,
+    isLoading,
+    isMutating,
+    isSearching,
+    refreshSamples,
+    handleDelete,
+    handleTake,
+    handlePutBack,
+    setIsSearching,
+  } = useSampleData([]);
+
 
 
   const [categoryOptions, setCategoryOptions] = useState([]);
@@ -182,6 +198,41 @@ const StyleDetails = () => {
     }
   };
 
+  // const [isSearching, setIsSearching] = useState(false);
+  const [showSearchForm, setShowSearchForm] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearchClick = useCallback((styleCode) => {
+    setSearchTerm(styleCode);
+    setShowSearchForm(true);
+    setIsSearching(true);
+    refreshSamples(searchTerm).finally(() => {
+      setIsSearching(false);
+    });
+  }, [searchTerm]);
+
+  const tableHeadings = useMemo(() => [ // Memoize this array as well
+    { label: "SL" },
+    { label: "Sample Date", key: "sample_date" },
+    { label: "Buyer", key: "buyer" },
+    { label: "Category", key: "category" },
+    { label: "Style", key: "style" },
+    { label: "Shelf", key: "shelf" },
+    { label: "Division", key: "division" },
+    { label: "Position", key: "position" },
+    { label: "Availability", key: "availability" },
+    { label: "Status", key: "status" },
+    { label: "Added by", key: "added_by" },
+    { label: "Taken By", key: "taken_by" }, // Add these if you want them in export
+    { label: "Purpose", key: "purpose" },
+    { label: "Taken At", key: "taken_at" },
+    { label: "Returned By", key: "returned_by" },
+    { label: "Return Purpose", key: "return_purpose" },
+    { label: "Returned At", key: "returned_at" },
+    // { label: "Actions" }, // Exclude Actions from export
+  ], []);
+
   if (loading) return <p className="text-center text-gray-500">Loading...</p>;
   if (!style) return <p className="text-center text-red-500">Style not found.</p>;
 
@@ -231,7 +282,7 @@ const StyleDetails = () => {
             setStyle={setStyle}
             isEditing={isEditing}
           />
-          
+
           {showAddForm &&
             <AddEditForm
               handleSave={handleSave}
@@ -250,8 +301,58 @@ const StyleDetails = () => {
 
         <div className="">
           <SamplingCard style={style} setShowAddForm={setShowAddForm} showAddForm={showAddForm} />
+        </div>
+
+        <button
+          onClick={() => handleSearchClick(style.style)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-md text-base transition-colors duration-200 shadow-sm hover:shadow-md flex-grow md:flex-grow-0"
+          disabled={isSearching}
+        >
+          {isSearching ? "Searching..." : "Search"}
+        </button>
+
+
+        {
+          showSearchForm &&
+          <div className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <input
+              type="text"
+              placeholder="Search by style, category, or added by..."
+              className="border border-gray-300 p-2.5 rounded-md w-full md:flex-1 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") handleSearchClick();
+              }}
+              aria-label="Search samples"
+            />
+
+            <div>
+              {samples?.length > 0 ? (
+                samples.map((sample, idx) => (
+                  <SampleListRow
+                    key={sample._id}
+                    sample={sample}
+                    index={idx}
+                    userRole={userInfo?.role}
+                    userInfo={userInfo}
+                    handleDelete={handleDelete}
+                    handleTake={(id, purpose) => handleTake(id, purpose, userInfo)}
+                    handlePutBack={(sampleId, newPosition, returnPurpose) => handlePutBack(sampleId, newPosition, returnPurpose, userInfo)}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={tableHeadings.length + 1} className="text-center p-6 text-gray-500 text-base"> {/* +1 for the Actions column */}
+                    No samples found matching your criteria.
+                  </td>
+                </tr>
+              )}
+
+            </div>
           </div>
 
+        }
       </div>
     </div>
   );

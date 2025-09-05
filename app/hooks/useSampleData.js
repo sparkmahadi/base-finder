@@ -19,6 +19,7 @@ export const useSampleData = (initialSamples) => {
         params: { search: searchTerm }, // Pass search term for refresh too
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+      console.log("searched sample", searchTerm, "got", res?.data.samples)
       setSamples(res.data.samples || []);
       if(res.data?.message){
           toast.success(res.data?.message);

@@ -116,8 +116,8 @@ export default function StyleBasicForm() {
     if (optionType === "buyer") endpoint = "buyers";
     if (optionType === "item") endpoint = "categories";
     if (optionType === "status") endpoint = "statuses";
-    if (optionType === "season") endpoint = "seasons";  // depends on your backend
-    if (optionType === "fabrication") endpoint = "fabrications"; // depends on backend
+    if (optionType === "season") endpoint = "seasons";
+    if (optionType === "fabrication") endpoint = "fabrications";
 
     if (optionType === "item") {
       try {

@@ -4,21 +4,22 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { getAuthHeaders } from "../utils/getAuthHeaders";
+import { useUserData } from "../hooks/useUserData";
+import { useBuyerData } from "../hooks/useBuyerData";
 
 export default function TeamsManager() {
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const API_URL = `${BASE_URL}/teams`;
-  const USERS_API_URL = `${BASE_URL}/users`; // Adjust to your users API
-  const BUYERS_API_URL = `${BASE_URL}/utilities/buyers`;
-  // const authToken = { Authorization: `Bearer ${localStorage.getItem("token")}` };
+  const USERS_API_URL = `${BASE_URL}/users`;
 
   const router = useRouter();
 
   const [teams, setTeams] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [buyers, setBuyers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const {users} = useUserData();
+  const {buyers} = useBuyerData();
 
   const [formData, setFormData] = useState({
     team_name: "",
@@ -39,26 +40,6 @@ export default function TeamsManager() {
     setLoading(false);
   };
 
-  // Fetch users for selection
-  const fetchUsers = async () => {
-    try {
-      const { data } = await axios.get(USERS_API_URL, {headers: getAuthHeaders()});
-      setUsers(data || []);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    }
-  };
-
-  // Fetch buyers for selection
-  const fetchBuyers = async () => {
-    try {
-      const { data } = await axios.get(BUYERS_API_URL, {headers: getAuthHeaders()});
-      console.log(data);
-      setBuyers(data.data || []);
-    } catch (err) {
-      console.error("Error fetching buyers:", err);
-    }
-  };
 
   // Toggle buyer selection
   const toggleBuyer = (username) => {
@@ -72,8 +53,6 @@ export default function TeamsManager() {
 
   useEffect(() => {
     fetchTeams();
-    fetchUsers();
-    fetchBuyers();
   }, []);
 
   // Handle change for team_name

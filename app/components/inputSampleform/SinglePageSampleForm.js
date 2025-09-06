@@ -85,7 +85,7 @@ const SinglePageSampleForm = () => {
 
     // NEW API calls for adding utilities (implement these on your backend!)
     const apiCreateCategory = async (categoryName) => {
-        const response = await axios.post(`${API_BASE_URL}/utilities/categories`, { cat_name: categoryName, status: "active", totalSamples: 0, createdBy: userInfo?.name }, {
+        const response = await axios.post(`${API_BASE_URL}/utilities/categories`, { value: categoryName, createdBy: userInfo?.name }, {
             headers: getAuthHeaders(),
         });
         return response.data;
@@ -533,13 +533,13 @@ const SinglePageSampleForm = () => {
                                     key={cat._id}
                                     onClick={() => {
                                         setShowCustomCategoryInput(false);
-                                        handleCategoryBuyerSelect('category', cat.cat_name);
+                                        handleCategoryBuyerSelect('category', cat.value);
                                     }}
                                     className={`p-3 rounded-lg border-2 transition-all duration-200 ease-in-out
-                                              ${formData.category === cat.cat_name && !showCustomCategoryInput ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md' : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'}
+                                              ${formData.category === cat.value && !showCustomCategoryInput ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md' : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'}
                                               text-sm font-medium`}
                                 >
-                                    {cat.cat_name}
+                                    {cat.value}
                                 </button>
                             ))}
                             <button

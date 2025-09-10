@@ -388,6 +388,7 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     { key: 'released', label: 'Released', isDate: true },
     { key: 'last_taken_at', label: 'Last Taken At', isDate: true },
     { key: 'last_taken_by', label: 'Last Taken By' },
+    { key: 'team', label: 'Team' },
   ];
 
   const tableHeadings = [
@@ -404,6 +405,8 @@ export default function SampleDetails({ initialSampleData }) { // Receive initia
     { label: "Added by", key: "added_by" },
     { label: "Actions" },
   ];
+
+  console.log(sample)
 
   if (loading) {
     return <Loader message="Loading sample details..." />;

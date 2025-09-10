@@ -23,7 +23,7 @@ const StyleDetails = () => {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const {
-    samples,
+    searchedSamples,
     isLoading,
     isMutating,
     isSearching,
@@ -182,7 +182,6 @@ const StyleDetails = () => {
     }
   };
 
-
   const handleSubmit = async () => {
     try {
       const payload = { ...style };
@@ -308,6 +307,7 @@ const StyleDetails = () => {
       </button>
 
 
+
       {
         showSearchForm &&
         <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -340,8 +340,8 @@ const StyleDetails = () => {
                 </tr>
               </thead>
               <tbody>
-                {samples?.length > 0 ? (
-                  samples.map((sample, idx) => (
+                {searchedSamples?.length > 0 ? (
+                  searchedSamples.map((sample, idx) => (
                     <SampleListRow
                       key={sample._id}
                       sample={sample}

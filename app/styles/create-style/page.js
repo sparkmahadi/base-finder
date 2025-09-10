@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function StyleBasicForm() {
   const router = useRouter();
-  const {userInfo} = useAuth();
+  const { userInfo } = useAuth();
 
   const [formData, setFormData] = useState({
     buyer: "",
@@ -36,16 +36,11 @@ export default function StyleBasicForm() {
   const [buyerOptions, setBuyerOptions] = useState([]);
   const [itemOptions, setItemOptions] = useState([]);
 
-  const [seasonOptions, setSeasonOptions] = useState(["SS25", "SS26", "FW25"]);
+  const [seasonOptions, setSeasonOptions] = useState([]);
   const [fabricationOptions, setFabricationOptions] = useState([
     "SJ 180gsm",
     "Rib 200gsm",
     "PK 220gsm",
-  ]);
-  const [statusOptions, setStatusOptions] = useState([
-    "active",
-    "closed",
-    "sampling",
   ]);
   const [printingOptions, setPrintingOptions] = useState([0, 1, 2, 3, 4, 5]);
 
@@ -77,20 +72,33 @@ export default function StyleBasicForm() {
       headers: getAuthHeaders(),
     });
     if (response.data.success) {
-      const data = response.data.data.map((item) => item.cat_name);
+      const data = response.data.data.map((item) => item.value);
+      console.log(response.data)
       setItemOptions(data);
     } else {
       toast.info(response.data.message);
     }
   };
 
-  const apiFetchStatuses = async () => {
-    const response = await axios.get(`${API_BASE_URL}/utilities/statuses`, {
+  const apiFetchSeasons = async () => {
+    const response = await axios.get(`${API_BASE_URL}/utilities/seasons`, {
       headers: getAuthHeaders(),
     });
     if (response.data.success) {
       const data = response.data.data.map((item) => item.value);
-      setStatusOptions(data);
+      setSeasonOptions(data);
+    } else {
+      toast.info(response.data.message);
+    }
+  };
+
+  const apiFetchFabrications = async () => {
+    const response = await axios.get(`${API_BASE_URL}/utilities/fabrications`, {
+      headers: getAuthHeaders(),
+    });
+    if (response.data.success) {
+      const data = response.data.data.map((item) => item.value);
+      setFabricationOptions(data);
     } else {
       toast.info(response.data.message);
     }
@@ -99,7 +107,8 @@ export default function StyleBasicForm() {
   useEffect(() => {
     apiFetchBuyers();
     apiFetchCategories();
-    apiFetchStatuses();
+    apiFetchSeasons();
+    apiFetchFabrications();
   }, []);
 
   // Handle form field change
@@ -110,6 +119,7 @@ export default function StyleBasicForm() {
 
   // Save new option to DB
   const addNewOption = async (optionType, value) => {
+    console.log(optionType, value)
     if (!value) return;
 
     let endpoint = "";
@@ -119,31 +129,16 @@ export default function StyleBasicForm() {
     if (optionType === "season") endpoint = "seasons";
     if (optionType === "fabrication") endpoint = "fabrications";
 
-    if (optionType === "item") {
-      try {
-        await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
-          cat_name: value, createdBy: userInfo?.username
-        }, {
-          headers: getAuthHeaders(),
-        });
-        console.log(`Saved new ${optionType}: ${value}`);
-      } catch (err) {
-        console.error(`Error saving ${optionType}:`, err);
-        toast.error(`Failed to save new ${optionType} to database.`);
-      }
-    }
-    else {
-      try {
-        await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
-          value, createdBy: userInfo?.username
-        }, {
-          headers: getAuthHeaders(),
-        });
-        console.log(`Saved new ${optionType}: ${value}`);
-      } catch (err) {
-        console.error(`Error saving ${optionType}:`, err);
-        toast.error(`Failed to save new ${optionType} to database.`);
-      }
+    try {
+      await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
+        value, createdBy: userInfo?.username
+      }, {
+        headers: getAuthHeaders(),
+      });
+      console.log(`Saved new ${optionType}: ${value}`);
+    } catch (err) {
+      console.error(`Error saving ${optionType}:`, err);
+      toast.error(`Failed to save new ${optionType} to database.`);
     }
   };
 
@@ -157,7 +152,6 @@ export default function StyleBasicForm() {
     if (type === "buyer") setBuyerOptions((prev) => [...prev, newOption]);
     if (type === "season") setSeasonOptions((prev) => [...prev, newOption]);
     if (type === "fabrication") setFabricationOptions((prev) => [...prev, newOption]);
-    if (type === "status") setStatusOptions((prev) => [...prev, newOption]);
     if (type === "item") setItemOptions((prev) => [...prev, newOption]);
 
     // Persist to DB
@@ -177,7 +171,6 @@ export default function StyleBasicForm() {
     e.preventDefault();
     await addNewOption("buyer", formData.buyer);
     await addNewOption("item", formData.item);
-    await addNewOption("status", formData.status);
 
     const payload = {
       ...formData,
@@ -332,33 +325,6 @@ export default function StyleBasicForm() {
           />
         </div>
 
-        {/* Status */}
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-600 mb-1">Status</label>
-          <div className="flex gap-2">
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="border rounded-lg p-2 flex-1"
-            >
-              <option value="">-- Select Status --</option>
-              {statusOptions.map((status, idx) => (
-                <option key={idx} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => handleAddOption("status")}
-              className="px-2 bg-green-500 text-white rounded-lg"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
         {/* Fabrication */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-600 mb-1">
@@ -387,8 +353,6 @@ export default function StyleBasicForm() {
             </button>
           </div>
         </div>
-
-
 
         {/* No. of Printing */}
         <div className="flex flex-col">

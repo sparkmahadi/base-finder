@@ -6,12 +6,17 @@ import { toast } from "react-toastify";
 import { Search, Plus, Eye, Trash2, X, Download } from 'lucide-react'; // Import Lucide icons
 import Modal from "./Modal";
 import * as XLSX from "xlsx";
+import { useAuth } from "../context/AuthContext";
 
 export default function Styles() {
+  const {userInfo} = useAuth();
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  const [styleStatus, setStyleStatus] = useState(null);
+
   const [filters, setFilters] = useState({
     buyer: "",
     season: "",
@@ -105,23 +110,6 @@ export default function Styles() {
     fetchData();
   }, [getAuthHeaders]);
 
-  useEffect(() => {
-    let result = data;
-    if (search.trim()) {
-      result = result.filter((item) =>
-        item.style.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    Object.keys(filters).forEach((key) => {
-      if (filters[key]) {
-        result = result.filter((item) =>
-          item[key] && item[key].toLowerCase() === filters[key].toLowerCase()
-        );
-      }
-    });
-    setFilteredData(result);
-  }, [search, filters, data]);
-
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -141,8 +129,46 @@ export default function Styles() {
   };
 
   const getUniqueValues = (field) => {
+    if (field === "status") {
+      // Use rendered status instead of DB field
+      return [...new Set(data.map((item) => getStyleStatus(item)).filter(Boolean))];
+    }
     return [...new Set(data.map((item) => item[field]).filter(Boolean))];
   };
+
+  useEffect(() => {
+    let result = data;
+
+    if (search.trim()) {
+      result = result.filter((item) =>
+        item.style?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        if (key === "status") {
+          result = result.filter(
+            (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
+          );
+        } else if (key === "fabrication") {
+          result = result.filter((item) =>
+            item.fabric
+              ?.replace(/\s+/g, "")  // remove all spaces
+              .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
+          );
+        } else {
+          result = result.filter(
+            (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
+          );
+        }
+      }
+    });
+
+    setFilteredData(result);
+  }, [search, filters, data]);
+
+
 
   const openDeleteModal = (item) => {
     setItemToDelete(item);
@@ -175,20 +201,98 @@ export default function Styles() {
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      active: "bg-green-500",
-      sampling: "bg-green-500",
-      producing: "bg-green-500",
-      closed: "bg-orange-800",
-      cancelled: "bg-gray-500",
-      pending: "bg-yellow-500",
+      inquiry: "bg-gray-400",
+      testing: "bg-yellow-600",
+      fit: "bg-blue-400",
+      "2nd fit": "bg-blue-500",
+      pp: "bg-green-600",
+      "pp screen": "bg-green-700",
+      rpp: "bg-pink-400",
+      "rpp screen": "bg-pink-600",
+      pro: "bg-purple-500",
+      "pro screen": "bg-purple-600",
     };
+
     const colorClass = statusMap[status?.toLowerCase()] || "bg-gray-500";
+
     return (
-      <span className={`inline-block px-2 py-1 text-xs font-semibold text-white rounded-full ${colorClass}`}>
+      <span
+        className={`inline-block px-2 py-1 text-xs font-semibold text-white rounded-full ${colorClass}`}
+      >
         {status}
       </span>
     );
   };
+
+
+  const SAMPLING_STAGES = ["TESTING", "Fit", "2nd Fit", "PP", "PP Screen", "RPP", "RPP Screen"];
+
+  const getStyleStatus = (style) => {
+    // 1️⃣ Production check
+    if (style.productionRecords?.length) return "Pro";
+    if (
+      style.pro?.date &&
+      (style.pro.date.toLowerCase?.() === "done" || !isNaN(Date.parse(style.pro.date)))
+    ) {
+      return "Pro";
+    }
+
+    // 2️⃣ Sampling stages (dynamic & flexible)
+    for (let i = SAMPLING_STAGES.length - 1; i >= 0; i--) {
+      const stage = SAMPLING_STAGES[i];
+
+      switch (stage) {
+        case "TESTING":
+          if (style.TESTING?.date || style.testing?.date) return "Testing";
+          break;
+
+        case "Fit":
+          if (style.fit?.date) return "Fit";
+          break;
+
+        case "2nd Fit":
+          if (style.second_fit?.date) return "2nd Fit";
+          break;
+
+        case "PP":
+          if (
+            style.PP?.date ||
+            style.pp?.date ||
+            style.Pp?.date
+          ) {
+            if (
+              ["done", "completed"].includes(
+                (style.PP?.date || style.pp?.date || style.Pp?.date)?.toLowerCase?.()
+              ) ||
+              !isNaN(Date.parse(style.PP?.date || style.pp?.date || style.Pp?.date))
+            ) {
+              return "PP";
+            }
+          }
+          break;
+
+        case "PP Screen":
+          if (style.PP?.screen || style.pp_sc?.date) return "PP Screen";
+          break;
+
+        case "RPP":
+          if (style.RPP?.date) return "RPP";
+          break;
+
+        case "RPP Screen":
+          if (style.RPP?.screen) return "RPP Screen";
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    // 3️⃣ Default
+    return "Inquiry";
+  };
+
+
 
   if (loading) {
     return (
@@ -211,13 +315,16 @@ export default function Styles() {
     <div className="p-8 bg-gray-100 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-extrabold text-gray-900">Styles Overview ✨</h2>
-        <button
-          onClick={downloadExcel}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
-        >
-          <Download className="mr-2 h-5 w-5" />
-          Download Excel
-        </button>
+        {
+          userInfo?.role === "admin" &&
+          <button
+            onClick={downloadExcel}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
+          >
+            <Download className="mr-2 h-5 w-5" />
+            Download Excel
+          </button>
+        }
         <button
           onClick={() => router.push('/styles/create-style')}
           className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
@@ -377,7 +484,7 @@ export default function Styles() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.version}</td>
 
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {getStatusBadge(item.status)}
+                      {getStatusBadge(getStyleStatus(item))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.factory_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -11,11 +11,105 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
     "item",
     "style",
     "version",
-    "status",
     "fabric",
     "prints",
     "similar",
   ];
+
+  // Sampling stages for status logic
+  const SAMPLING_STAGES = ["TESTING", "Fit", "2nd Fit", "PP", "PP Screen", "RPP", "RPP Screen"];
+
+  // Function to get style status dynamically
+  const getStyleStatus = (style) => {
+    // 1️⃣ Production check
+    if (style.productionRecords?.length) return "Pro";
+    if (
+      style.pro?.date &&
+      (style.pro.date.toLowerCase?.() === "done" || !isNaN(Date.parse(style.pro.date)))
+    ) {
+      return "Pro";
+    }
+
+    // 2️⃣ Sampling stages
+    for (let i = SAMPLING_STAGES.length - 1; i >= 0; i--) {
+      const stage = SAMPLING_STAGES[i];
+
+      switch (stage) {
+        case "TESTING":
+          if (style.TESTING?.date || style.testing?.date) return "Testing";
+          break;
+
+        case "Fit":
+          if (style.fit?.date) return "Fit";
+          break;
+
+        case "2nd Fit":
+          if (style.second_fit?.date) return "2nd Fit";
+          break;
+
+        case "PP":
+          if (
+            style.PP?.date ||
+            style.pp?.date ||
+            style.Pp?.date
+          ) {
+            if (
+              ["done", "completed"].includes(
+                (style.PP?.date || style.pp?.date || style.Pp?.date)?.toLowerCase?.()
+              ) ||
+              !isNaN(Date.parse(style.PP?.date || style.pp?.date || style.Pp?.date))
+            ) {
+              return "PP";
+            }
+          }
+          break;
+
+        case "PP Screen":
+          if (style.PP?.screen || style.pp_sc?.date) return "PP Screen";
+          break;
+
+        case "RPP":
+          if (style.RPP?.date) return "RPP";
+          break;
+
+        case "RPP Screen":
+          if (style.RPP?.screen) return "RPP Screen";
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    // 3️⃣ Default
+    return "Inquiry";
+  };
+
+  // Optional: Status badge component
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      inquiry: "bg-gray-400",
+      testing: "bg-yellow-600",
+      fit: "bg-blue-400",
+      "2nd fit": "bg-blue-500",
+      pp: "bg-green-600",
+      "pp screen": "bg-green-700",
+      rpp: "bg-pink-400",
+      "rpp screen": "bg-pink-600",
+      pro: "bg-purple-500",
+      "pro screen": "bg-purple-600",
+    };
+
+    const colorClass = statusMap[status?.toLowerCase()] || "bg-gray-500";
+
+    return (
+      <span
+        className={`inline-block px-2 py-1 text-xs font-semibold text-white rounded-full ${colorClass}`}
+      >
+        {status}
+      </span>
+    );
+  };
 
   const [showAddProductionForm, setShowAddProductionForm] = useState(false);
   const [productionInfo, setProductionInfo] = useState({
@@ -70,7 +164,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
           default:
             updatedRecords = productionRecords;
         }
-        
+
         setProductionRecords(updatedRecords);
         setStyle((prev) => ({ ...prev, productionRecords: updatedRecords }));
         return response.data.message || "Update successful!";
@@ -90,7 +184,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
       : { ...productionInfo, added_by: currentUser };
 
     handleApiUpdate(isEditingRecord ? "edit" : "add", payload);
-    
+
     // Reset the form regardless of success or failure
     setProductionInfo({
       factory_name: "",
@@ -104,22 +198,22 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
     });
     setShowAddProductionForm(false);
   };
-  
+
   const handleEditRecord = (record) => {
     setProductionInfo(record);
     setShowAddProductionForm(true);
   };
-  
+
   const handleDeleteRecord = (recordToDelete) => {
     handleApiUpdate("delete", { recordToDelete });
   };
-  
+
   return (
     <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
         Basic Style Information
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {styleInfoPoints.map((field) => (
           <div key={field} className="flex flex-col">
@@ -142,6 +236,10 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
             )}
           </div>
         ))}
+        <div className="mt-4">
+          <span className="font-semibold text-gray-700 mr-2">Style Status:</span>
+          {getStatusBadge(getStyleStatus(style))}
+        </div>
       </div>
 
       <div className="mt-4">

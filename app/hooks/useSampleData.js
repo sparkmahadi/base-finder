@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 
 export const useSampleData = (initialSamples) => {
   const [samples, setSamples] = useState([]);
+  const [searchedSamples, setSearchedSamples] = useState([]);
   const [isLoading, setIsLoading] = useState(!initialSamples.length); // General loading for initial fetch
   const [isMutating, setIsMutating] = useState(false); // For delete, take, put back actions
   const [isSearching, setIsSearching] = useState(false); // For search/filter operations
@@ -132,9 +133,11 @@ export const useSampleData = (initialSamples) => {
       if (res.data?.success) {
         toast.success(res.data.message);
         setSamples(res.data.data)
+        setSearchedSamples(res.data.data);
       } else {
         toast.error(res.data?.message || "No Such sample found.");
         setSamples([]);
+        setSearchedSamples([]);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "An unexpected error occurred while searching the sample.");
@@ -146,6 +149,7 @@ export const useSampleData = (initialSamples) => {
 
   return {
     samples,
+    searchedSamples,
     isLoading,
     isMutating,
     isSearching,

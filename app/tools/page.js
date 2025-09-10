@@ -73,7 +73,6 @@ const Tools = () => {
         const form = e.target;
         const team_name = form.team_name.value;
         console.log(team_name);
-        toast.info("Under maintenance. Feature will be added soon!!!")
         try {
             const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/pattern-release-logs/add-team-to-empty-patterns`, {
                 teamName: team_name
@@ -84,15 +83,31 @@ const Tools = () => {
         }
     }
 
-        const handleInjectTeamToSamples = async (e) => {
+    const handleInjectTeamToSamples = async (e) => {
         e.preventDefault();
         const form = e.target;
         const team_name = form.team_name.value;
         console.log(team_name);
-        toast.info("Under maintenance. Feature will be added soon!!!")
         try {
             const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/add-team-to-empty-samples`, {
                 teamName: team_name
+            });
+            toast.success("✅ Success: " + JSON.stringify(res.data));
+        } catch (err) {
+            toast.error("❌ Error: " + (err.response?.data?.message || err.message));
+        }
+    }
+
+    const handleAddFieldToSamples = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const field_name = form.field_name.value;
+        const field_value = form.field_value.value;
+        console.log(field_name, field_value);
+        toast.info("Under maintenance. Feature will be added soon!!!")
+        try {
+            const res = await axios.patch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/add-field-to-empty-samples`, {
+                field_name, field_value
             });
             toast.success("✅ Success: " + JSON.stringify(res.data));
         } catch (err) {
@@ -153,19 +168,32 @@ const Tools = () => {
                                 <div>
                                     <form onSubmit={handleInjectTeamToPatterns}>
                                         <h2 className="text-gray-600 text-sm">Add team name to empty patterns</h2>
-                                        <input name='team_name' className='border'/>
+                                        <input name='team_name' className='border' />
                                         <button className='bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md cursor-pointer"'>Add Team to Patterns</button>
                                     </form>
                                 </div>
                             </div>
 
-                                                        <div
+                            <div
                                 className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition"
                             >
                                 <div>
                                     <form onSubmit={handleInjectTeamToSamples}>
                                         <h2 className="text-gray-600 text-sm">Add team name to empty samples</h2>
-                                        <input name='team_name' className='border'/>
+                                        <input name='team_name' className='border' />
+                                        <button className='bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md cursor-pointer"'>Add Team to Samples</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div
+                                className="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition"
+                            >
+                                <div>
+                                    <form onSubmit={handleAddFieldToSamples}>
+                                        <h2 className="text-gray-600 text-sm">Add field to samples</h2>
+                                        <input name='field_name' className='border' />
+                                        <input name='field_value' className='border' />
                                         <button className='bg-sky-600 hover:bg-sky-700 text-white font-medium px-3 py-1.5 rounded-md text-sm transition-colors duration-200 shadow-sm hover:shadow-md cursor-pointer"'>Add Team to Samples</button>
                                     </form>
                                 </div>

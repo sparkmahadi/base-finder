@@ -267,12 +267,14 @@ const StyleDetails = () => {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-2 gap-6">
+      <div className="">
         <div className="">
           <BasicStyleInfo
             style={style}
             setStyle={setStyle}
             isEditing={isEditing}
+            showAddForm={showAddForm}
+            setShowAddForm={setShowAddForm}
           />
 
           {showAddForm &&

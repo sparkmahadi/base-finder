@@ -18,7 +18,6 @@ const SampleListRow = ({
   userInfo,
 }) => {
   const router = useRouter();
-  console.log("sample", sample);
   const [isTakeModalOpen, setIsTakeModalOpen] = useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
   const [purpose, setPurpose] = useState("");

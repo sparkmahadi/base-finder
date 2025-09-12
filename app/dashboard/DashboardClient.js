@@ -9,21 +9,14 @@ import { useAuth } from "../context/AuthContext";
 // No longer need axios imports here for initial data fetching
 
 const DashboardClient = ({
-  initialSamples,
-  initialTakenSamples,
-  initialDeletedSamples,
-  initialCategories,
-  initialUsers,
+  samples,
+  takenSamples,
+  deletedSamples,
+  categories,
+  users,
 }) => {
   const router = useRouter();
   const { isAuthenticated, userInfo } = useAuth(); // Assume isAuthenticated and userInfo are available from context
-
-  // Initialize states with props received from the server
-  const [samples, setSamples] = useState(initialSamples);
-  const [categories, setCategories] = useState(initialCategories);
-  const [takenSamples, setTakenSamples] = useState(initialTakenSamples);
-  const [deletedSamples, setDeletedSamples] = useState(initialDeletedSamples);
-  const [users, setUsers] = useState(initialUsers);
 
   const stats = [
     {

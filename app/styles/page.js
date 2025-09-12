@@ -136,38 +136,74 @@ export default function Styles() {
     return [...new Set(data.map((item) => item[field]).filter(Boolean))];
   };
 
+  // useEffect(() => {
+  //   let result = data;
+
+  //   if (search.trim()) {
+  //     result = result.filter((item) =>
+  //       item.style?.toLowerCase().includes(search.toLowerCase())
+  //     );
+  //   }
+
+  //   Object.keys(filters).forEach((key) => {
+  //     if (filters[key]) {
+  //       if (key === "status") {
+  //         result = result.filter(
+  //           (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
+  //         );
+  //       } else if (key === "fabrication") {
+  //         result = result.filter((item) =>
+  //           item.fabric
+  //             ?.replace(/\s+/g, "")  // remove all spaces
+  //             .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
+  //         );
+  //       } else {
+  //         result = result.filter(
+  //           (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
+  //         );
+  //       }
+  //     }
+  //   });
+
+  //   setFilteredData(result);
+  // }, [search, filters, data]);
+
+
+
   useEffect(() => {
-    let result = data;
+  let result = data;
 
-    if (search.trim()) {
-      result = result.filter((item) =>
-        item.style?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
+  if (search.trim()) {
+    result = result.filter((item) =>
+      item.style?.toLowerCase().includes(search.toLowerCase())
+    );
+  }
 
-    Object.keys(filters).forEach((key) => {
-      if (filters[key]) {
-        if (key === "status") {
-          result = result.filter(
-            (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
-          );
-        } else if (key === "fabrication") {
-          result = result.filter((item) =>
-            item.fabric
-              ?.replace(/\s+/g, "")  // remove all spaces
-              .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
-          );
-        } else {
-          result = result.filter(
-            (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
-          );
-        }
+  Object.keys(filters).forEach((key) => {
+    if (filters[key]) {
+      if (key === "status") {
+        result = result.filter(
+          (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
+        );
+      } else if (key === "fabrication") {
+        result = result.filter((item) =>
+          item.fabric
+            ?.replace(/\s+/g, "")
+            .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
+        );
+      } else {
+        result = result.filter(
+          (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
+        );
       }
-    });
+    }
+  });
 
-    setFilteredData(result);
-  }, [search, filters, data]);
+  // ✅ Sort after filtering
+  result = sortByStatusAndDate(result);
 
+  setFilteredData(result);
+}, [search, filters, data]);
 
 
   const openDeleteModal = (item) => {
@@ -225,7 +261,7 @@ export default function Styles() {
   };
 
 
-  const SAMPLING_STAGES = ["TESTING", "Fit", "2nd Fit", "PP", "PP Screen", "RPP", "RPP Screen"];
+  const SAMPLING_STAGES = ["Inquiry", "TESTING", "Testing", "Fit", "2nd Fit", "PP", "PP Screen", "RPP", "RPP Screen", "Pro", "PRO", "Pro-Screen", "PRO_SCREEN"];
 
   const getStyleStatus = (style) => {
     // 1️⃣ Production check
@@ -291,6 +327,24 @@ export default function Styles() {
     // 3️⃣ Default
     return "Inquiry";
   };
+
+  const sortByStatusAndDate = (arr) => {
+  return [...arr].sort((a, b) => {
+    const aStatus = getStyleStatus(a);
+    const bStatus = getStyleStatus(b);
+
+    const aIndex = SAMPLING_STAGES.indexOf(aStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(aStatus);
+    const bIndex = SAMPLING_STAGES.indexOf(bStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(bStatus);
+
+    if (aIndex !== bIndex) return aIndex - bIndex;
+
+    // Optional: sort by created/updated date (descending)
+    const aDate = new Date(a.added_at || a.created_at || 0).getTime();
+    const bDate = new Date(b.added_at || b.created_at || 0).getTime();
+
+    return bDate - aDate;
+  });
+};
 
 
 

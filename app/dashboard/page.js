@@ -1,84 +1,61 @@
-import DashboardClient from './DashboardClient'; // Assuming your Dashboard component is now named DashboardClient
-import { toast } from "react-toastify";
+"use client"
+
+import DashboardClient from './DashboardClient';
 import axios from "axios";
-
-// Define your server-side fetch functions
-const fetchSamplesServer = async () => {
-  try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples`);
-    return res?.data?.samples || [];
-  } catch (err) {
-    console.error("Server Error: Failed to fetch samples", err);
-    // On the server, you can log errors but can't directly show toast.
-    // The client will get an empty array or handle null/undefined for this data.
-    return [];
-  }
-};
-
-const fetchTakenSamplesServer = async () => {
-  try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`);
-    return res?.data?.samples || [];
-  } catch (err) {
-    console.error("Server Error: Failed to fetch taken samples", err);
-    return [];
-  }
-};
-
-const fetchDeletedSamplesServer = async () => {
-  try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/deleted-samples`);
-    return res?.data?.samples || [];
-  } catch (err) {
-    console.error("Server Error: Failed to fetch deleted samples", err);
-    return [];
-  }
-};
-
-const fetchCategoriesServer = async () => {
-  try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/utilities/categories`);
-    return res?.data?.data || [];
-  } catch (err) {
-    console.error("Server Error: Failed to fetch categories", err);
-    return [];
-  }
-};
-
-const fetchUsersServer = async () => {
-  try {
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`);
-    return res?.data || [];
-  } catch (err) {
-    console.error("Server Error: Failed to fetch users", err);
-    return [];
-  }
-};
+import { getAuthHeaders } from '../utils/getAuthHeaders';
+import { useEffect, useState } from 'react';
 
 
-export default async function DashboardPage() {
-  // Fetch all data concurrently on the server
-  const [
-    samples,
-    takenSamples,
-    deletedSamples,
-    categories,
-    users
-  ] = await Promise.all([
-    fetchSamplesServer(),
-    fetchTakenSamplesServer(),
-    fetchDeletedSamplesServer(),
-    fetchCategoriesServer(),
-    fetchUsersServer()
-  ]);
+
+export default function DashboardData() {
+
+  const [samples, setSamples] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [takenSamples, setTakenSamples] = useState([]);
+  const [deletedSamples, setDeletedSamples] = useState([]);
+  const [users, setUsers] = useState([]);
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [samplesRes, takenRes, deletedRes, categoriesRes, usersRes] =
+        await Promise.all([
+          axios.get(`${API_BASE_URL}/samples`, { headers: getAuthHeaders() }),
+          axios.get(`${API_BASE_URL}/samples/taken-samples`, {
+            headers: getAuthHeaders(),
+          }),
+          axios.get(`${API_BASE_URL}/samples/deleted-samples`, {
+            headers: getAuthHeaders(),
+          }),
+          axios.get(`${API_BASE_URL}/utilities/categories`, {
+            headers: getAuthHeaders(),
+          }),
+          axios.get(`${API_BASE_URL}/users`, { headers: getAuthHeaders() }),
+        ]);
+
+      setSamples(samplesRes.data?.samples || []);
+      setTakenSamples(takenRes.data?.samples || []);
+      setDeletedSamples(deletedRes.data?.samples || []);
+      setCategories(categoriesRes.data?.data || []);
+      setUsers(usersRes.data || []);
+    } catch (err) {
+      console.error("Error fetching dashboard data", err);
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   return (
     <DashboardClient
-      initialSamples={samples}
-      initialTakenSamples={takenSamples}
-      initialDeletedSamples={deletedSamples}
-      initialCategories={categories}
-      initialUsers={users}
+      samples={samples}
+      takenSamples={takenSamples}
+      deletedSamples={deletedSamples}
+      categories={categories}
+      users={users}
     />
   );
 }

@@ -13,7 +13,7 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
     const [modalPattern, setModalPattern] = useState(null);
 
 
-    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, productionRecords, ...relevantFields } = style;
+    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, productionRecords, sampling_update_at, sampling_updated_by, added_at, added_by, ...relevantFields } = style;
     const [editedStyle, setEditedStyle] = useState({ ...relevantFields });
     const [newActivityKey, setNewActivityKey] = useState("");
     const [newActivityDate, setNewActivityDate] = useState("");
@@ -159,13 +159,13 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
             <h3 className="text-xl font-bold text-gray-800 mb-4">Style Activities</h3>
 
             {!isEditing ? (
-                <ul className="space-y-3">
-                    {Object.entries(editedStyle).map(([key, value]) => {
+                <ul className="space-y-3 grid grid-cols-2 lg:grid-cols-3 gap-5">
+                    {Object.entries(editedStyle).map(([key, value], idx) => {
                         if (key === "_id") return null;
                         return (
                             <li
-                                key={key}
-                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                key={idx}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
                             >
                                 <div>
                                     <p className="font-medium capitalize">{key.replace(/_/g, " ")}:</p>
@@ -210,10 +210,10 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                 </ul>
             ) : (
                 <div className="space-y-3">
-                    {Object.entries(editedStyle).map(([key, value]) => {
+                    {Object.entries(editedStyle).map(([key, value], idx) => {
                         if (key === "_id") return null;
                         return (
-                            <div key={key} className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                            <div key={idx} className="p-3 border rounded-lg bg-gray-50 space-y-2">
                                 <p className="capitalize font-semibold">{key.replace(/_/g, " ")}:</p>
                                 {typeof value === "object" && value !== null ? (
                                     <div className="flex flex-col gap-2">
@@ -301,13 +301,6 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
             </div>
 
             <div className="mt-4 lg:flex justify-center items-center gap-6">
-                <button
-                    onClick={() => setShowAddForm((prev) => !prev)}
-                    className="w-full flex items-center justify-center py-2 px-4 bg-amber-600 text-white rounded-lg shadow-md hover:bg-amber-700 transition-all duration-300"
-                >
-                    <Eye className="h-5 w-5 mr-2" />
-                    {showAddForm ? "Hide Pattern Release Form" : "Show Pattern Release Form"}
-                </button>
 
                 <button
                     onClick={() => setIsEditing(true)}

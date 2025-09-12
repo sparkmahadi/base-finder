@@ -1,8 +1,12 @@
+"use client"
+
 import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
+import { Eye } from "lucide-react";
 
-const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
+const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddForm }) => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const styleInfoPoints = [
@@ -14,6 +18,10 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
     "fabric",
     "prints",
     "similar",
+    "sampling_update_at",
+    "sampling_updated_by",
+    "added_at",
+    "added_by",
   ];
 
   // Sampling stages for status logic
@@ -124,8 +132,6 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
   });
 
   const [productionRecords, setProductionRecords] = useState(style?.productionRecords || []);
-  const currentUser = "sparkm"; // In a real app, this would come from an authenticated user session
-
   const handleProductionInfoChange = (e) => {
     const { name, value } = e.target;
     setProductionInfo((prev) => ({
@@ -137,7 +143,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
   const handleApiUpdate = (action, payload) => {
     const apiUrl = `${API_BASE_URL}/styles/update-style-production/${style._id}`;
 
-    const apiPromise = axios.put(apiUrl, { action, ...payload });
+    const apiPromise = axios.put(apiUrl, { headers: getAuthHeaders() }, { action, ...payload });
 
     toast.promise(apiPromise, {
       loading: "Updating record...",
@@ -181,7 +187,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
     const isEditingRecord = productionInfo.added_at !== null;
     const payload = isEditingRecord
       ? { recordToEdit: productionInfo, updatedData: productionInfo }
-      : { ...productionInfo, added_by: currentUser };
+      : { ...productionInfo };
 
     handleApiUpdate(isEditingRecord ? "edit" : "add", payload);
 
@@ -209,14 +215,14 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
   };
 
   return (
-    <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+    <div className="bg-white p-6 rounded-xl shadow-md">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
         Basic Style Information
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {styleInfoPoints.map((field) => (
-          <div key={field} className="flex flex-col">
+      <div className="grid grid-cols-1 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-9 gap-4">
+        {styleInfoPoints.map((field, idx) => (
+          <div key={idx} className="flex flex-col">
             <label className="text-sm font-semibold text-gray-600 mb-1">
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
@@ -230,7 +236,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
                 }
               />
             ) : (
-              <p className="text-lg text-gray-900">
+              <p className=" text-gray-900">
                 {style?.[field] || "N/A"}
               </p>
             )}
@@ -309,24 +315,36 @@ const BasicStyleInfo = ({ style, setStyle, isEditing }) => {
         )}
       </div>
 
-      <button
-        onClick={() => {
-          setShowAddProductionForm(true);
-          setProductionInfo({
-            factory_name: "",
-            factory_code: "",
-            po_size_range: "",
-            totalQuantity: "",
-            added_by: "",
-            added_at: null,
-            updated_by: "",
-            updated_at: null,
-          });
-        }}
-        className={`mt-6 px-4 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center bg-blue-600 hover:bg-blue-700`}
-      >
-        Add Production Info
-      </button>
+      <div className="flex items-center gap-5">
+        <button
+          onClick={() => {
+            setShowAddProductionForm(true);
+            setProductionInfo({
+              factory_name: "",
+              factory_code: "",
+              po_size_range: "",
+              totalQuantity: "",
+              added_by: "",
+              added_at: null,
+              updated_by: "",
+              updated_at: null,
+            });
+          }}
+          className={`mt-6 px-4 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center bg-blue-600 hover:bg-blue-700`}
+        >
+          Add Production Info
+        </button>
+
+        <div className="mt-4 lg:flex justify-center items-center gap-6">
+          <button
+            onClick={() => setShowAddForm((prev) => !prev)}
+            className="w-full flex items-center justify-center py-2 px-4 bg-amber-600 text-white rounded-lg shadow-md hover:bg-amber-700 transition-all duration-300"
+          >
+            <Eye className="h-5 w-5 mr-2" />
+            {showAddForm ? "Hide Pattern Release Form" : "Show Pattern Release Form"}
+          </button>
+        </div>
+      </div>
 
       {showAddProductionForm && (
         <div>

@@ -49,7 +49,6 @@ const SampleListClient = () => {
     setIsSearching,
   } = useSampleData([]);
 
-  console.log(samples);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({

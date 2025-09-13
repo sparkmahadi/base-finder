@@ -1,5 +1,6 @@
 import PatternDetailsModal from "@/app/components/PatternDetailsModal";
 import { useAuth } from "@/app/context/AuthContext";
+import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
 import axios from "axios";
 import { format } from "date-fns";
 import { Eye, Trash2, Plus, Minus, Pencil } from "lucide-react";
@@ -46,7 +47,8 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                 field: key,
                 updated_by: userInfo?.username,
                 updated_at: new Date(),
-            });
+            },
+                { headers: getAuthHeaders() });
 
             if (res.data.success) {
                 const updated = { ...editedStyle };
@@ -71,7 +73,8 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                 updatedFields: editedStyle,
                 updated_by: userInfo?.username,
                 updated_at: new Date(),
-            });
+            },
+                { headers: getAuthHeaders() });
 
             if (res.data.success) {
                 onUpdateSampling && onUpdateSampling({ ...style, ...editedStyle });
@@ -100,7 +103,8 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                 date: newActivityDate,
                 added_by: userInfo?.username,
                 added_at: new Date().toISOString(),
-            });
+            },
+                { headers: getAuthHeaders() });
 
             if (res.data.success) {
                 const updated = {
@@ -135,7 +139,7 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                 return;
             }
 
-            const res = await axios.get(`${API_BASE_URL}/pattern-release-logs/get-pattern-by-id/${patternId}`);
+            const res = await axios.get(`${API_BASE_URL}/pattern-release-logs/get-pattern-by-id/${patternId}`, { headers: getAuthHeaders() });
 
             if (res.data.success) {
                 setModalPattern(res.data.data);

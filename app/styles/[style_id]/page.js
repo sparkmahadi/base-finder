@@ -160,7 +160,8 @@ const StyleDetails = () => {
             pattern_id: data1._id,
             updated_by: userInfo?.username,
             updated_at: new Date(),
-          }
+          },
+          {headers: getAuthHeaders()}
         );
 
         const data = res2.data;

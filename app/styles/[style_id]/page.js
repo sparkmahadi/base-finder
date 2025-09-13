@@ -183,6 +183,7 @@ const StyleDetails = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("updated style", style)
     try {
       const payload = { ...style };
 

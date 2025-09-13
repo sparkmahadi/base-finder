@@ -5,8 +5,10 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
 import { Eye } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 
 const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddForm }) => {
+  const {userInfo} = useAuth();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const styleInfoPoints = [
@@ -125,8 +127,6 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
     factory_code: "",
     po_size_range: "",
     totalQuantity: "",
-    added_by: "",
-    added_at: null,
     updated_by: "",
     updated_at: null,
   });
@@ -140,54 +140,57 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
     }));
   };
 
-  const handleApiUpdate = (action, payload) => {
+  const handleApiUpdate = async (action, payload) => {
     const apiUrl = `${API_BASE_URL}/styles/update-style-production/${style._id}`;
 
-    const apiPromise = axios.put(apiUrl, { headers: getAuthHeaders() }, { action, ...payload });
+    try {
+      const result = await axios.put(apiUrl, { action, ...payload }, { headers: getAuthHeaders() });
 
-    toast.promise(apiPromise, {
-      loading: "Updating record...",
-      success: (response) => {
-        // Update local state and parent state after successful API call
-        let updatedRecords;
-        switch (action) {
-          case "add":
-            updatedRecords = [...productionRecords, response.data.newRecord];
-            break;
-          case "edit":
-            updatedRecords = productionRecords.map((record) =>
-              record.added_at === payload.recordToEdit.added_at && record.added_by === payload.recordToEdit.added_by
-                ? response.data.updatedRecord
-                : record
-            );
-            break;
-          case "delete":
-            updatedRecords = productionRecords.filter(
-              (record) =>
-                !(record.added_at === payload.recordToDelete.added_at && record.added_by === payload.recordToDelete.added_by)
-            );
-            break;
-          default:
-            updatedRecords = productionRecords;
-        }
+      if (result.data?.success) {
+        toast.success(result.data.message);
 
-        setProductionRecords(updatedRecords);
-        setStyle((prev) => ({ ...prev, productionRecords: updatedRecords }));
-        return response.data.message || "Update successful!";
-      },
-      error: (err) => {
-        console.error("API update error:", err);
-        return err.response?.data?.message || "Something went wrong.";
-      },
-    });
+        setProductionRecords((prev) => {
+          switch (action) {
+            case "add":
+              return [...prev, payload]; // add new record
+
+            case "edit":
+              return prev.map((rec) =>
+                rec.added_at === payload.recordToEdit.added_at
+                  ? { ...rec, ...payload.updatedData, updated_at: new Date().toISOString() }
+                  : rec
+              );
+
+            case "delete":
+              return prev.filter((rec) => rec.added_at !== payload.recordToDelete.added_at);
+
+            default:
+              return prev;
+          }
+        });
+      } else {
+        toast.info(result.data?.message || "Update failed");
+      }
+    } catch (error) {
+      console.error("Error updating production record:", error);
+      toast.error("Something went wrong while updating production records.");
+    }
   };
+
 
   const handleProductionInfoSubmit = (e) => {
     e.preventDefault();
     const isEditingRecord = productionInfo.added_at !== null;
     const payload = isEditingRecord
-      ? { recordToEdit: productionInfo, updatedData: productionInfo }
-      : { ...productionInfo };
+      ? {
+        recordToEdit: productionInfo,
+        updatedData: { ...productionInfo, updated_by: userInfo?.username }, // keep editor info
+      }
+      : {
+        ...productionInfo,
+        added_by: userInfo?.username,  // ensure this is added when creating new record
+        added_at: new Date().toISOString(),
+      };
 
     handleApiUpdate(isEditingRecord ? "edit" : "add", payload);
 
@@ -197,10 +200,6 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
       factory_code: "",
       po_size_range: "",
       totalQuantity: "",
-      added_by: "",
-      added_at: null,
-      updated_by: "",
-      updated_at: null,
     });
     setShowAddProductionForm(false);
   };
@@ -220,9 +219,9 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
         Basic Style Information
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-9 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 xl:grid-cols-7 gap-x-5 gap-y-15">
         {styleInfoPoints.map((field, idx) => (
-          <div key={idx} className="flex flex-col">
+          <div key={idx} className="flex flex-col border rounded-lg p-2">
             <label className="text-sm font-semibold text-gray-600 mb-1">
               {field.charAt(0).toUpperCase() + field.slice(1)}
             </label>
@@ -256,9 +255,9 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
           <textarea
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
             rows="4"
-            value={style?.description || ""}
+            value={style?.descr || ""}
             onChange={(e) =>
-              setStyle((prev) => ({ ...prev, description: e.target.value }))
+              setStyle((prev) => ({ ...prev, descr: e.target.value }))
             }
           />
         ) : (
@@ -341,7 +340,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
             className="w-full flex items-center justify-center py-2 px-4 bg-amber-600 text-white rounded-lg shadow-md hover:bg-amber-700 transition-all duration-300"
           >
             <Eye className="h-5 w-5 mr-2" />
-            {showAddForm ? "Hide Pattern Release Form" : "Show Pattern Release Form"}
+            {showAddForm ? "Hide Pattern Release Form" : "Add Pattern Release"}
           </button>
         </div>
       </div>

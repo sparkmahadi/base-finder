@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from "next/navigation";
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import DeleteFieldFromStyles from './DeleteFieldFromStyles';
 
 const Tools = () => {
     const { userInfo } = useAuth();
@@ -198,6 +199,9 @@ const Tools = () => {
                                     </form>
                                 </div>
                             </div>
+                            
+
+                            <DeleteFieldFromStyles/>
 
                         </>
                     }

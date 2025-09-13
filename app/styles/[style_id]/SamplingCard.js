@@ -1,6 +1,7 @@
 import PatternDetailsModal from "@/app/components/PatternDetailsModal";
 import { useAuth } from "@/app/context/AuthContext";
 import axios from "axios";
+import { format } from "date-fns";
 import { Eye, Trash2, Plus, Minus, Pencil } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
@@ -153,6 +154,15 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
         setModalPattern(null);
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return "-";
+        try {
+            return format(new Date(dateString), "dd MMM yyyy");
+        } catch (err) {
+            return dateString; // fallback if invalid
+        }
+    };
+
 
     return (
         <div className="bg-white p-6 rounded-xl shadow-md">
@@ -176,7 +186,9 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
                                                     <>
                                                         {/* Inside the first loop for displaying activities */}
                                                         <p key={subKey}>
-                                                            {subKey.replace(/_/g, " ")}: {subValue || "-"}
+                                                            {subKey.replace(/_/g, " ")}:
+                                                            {/* {subKey.toLowerCase().includes("update_at") ? formatDate(subValue) : subValue || "-"} */}
+                                                            {subKey.toLowerCase().includes("date") ? formatDate(subValue) : subValue || "-"}
                                                             {subKey === "pattern_id" && subValue && (
                                                                 <button
                                                                     onClick={() => handleViewPattern(subValue)}

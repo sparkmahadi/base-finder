@@ -46,7 +46,7 @@ export default function Profile() {
 
       <div className="mb-4">
         <h3 className="font-medium text-lg">Team</h3>
-        <p>{userInfo?.team || "No full name available"}</p>
+        <p>{userInfo?.team || "No Team assigned"}</p>
       </div>
 
       <div className="mb-4">
@@ -79,6 +79,13 @@ export default function Profile() {
         >
           Edit Profile
         </button>
+        {userInfo?.team ||
+          <button
+            onClick={() => window.alert("This feature is still manual. Contact Mahadi!!!")} // Assuming a page to update profile
+            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+          >
+            Request Team
+          </button>}
       </div>
     </div>
   );

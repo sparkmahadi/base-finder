@@ -9,13 +9,11 @@ import * as XLSX from "xlsx";
 import { useAuth } from "../context/AuthContext";
 
 export default function Styles() {
-  const {userInfo} = useAuth();
+  const { userInfo } = useAuth();
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-  const [styleStatus, setStyleStatus] = useState(null);
 
   const [filters, setFilters] = useState({
     buyer: "",
@@ -71,7 +69,7 @@ export default function Styles() {
 
   // Download all fields dynamically
   const downloadExcel = () => {
-    const exportData = data.map((item, index) => {
+    const exportData = data?.map((item, index) => {
       const flatItem = flattenObject(item);
       const renamed = {};
 
@@ -98,6 +96,10 @@ export default function Styles() {
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles`, {
           headers: getAuthHeaders(),
         });
+        console.log(res.data)
+        if (res.data.success) {
+          toast.success(res.data.message)
+        } else { toast.info(res.data.message) }
         setData(res.data.data);
         setFilteredData(res.data.data);
       } catch (error) {
@@ -128,82 +130,65 @@ export default function Styles() {
     });
   };
 
-  const getUniqueValues = (field) => {
-    if (field === "status") {
-      // Use rendered status instead of DB field
-      return [...new Set(data.map((item) => getStyleStatus(item)).filter(Boolean))];
-    }
-    return [...new Set(data.map((item) => item[field]).filter(Boolean))];
-  };
+const getUniqueValues = (field) => {
+  if (field === "status") {
+    return [...new Set(data?.map((item) => getStyleStatus(item)).filter(Boolean))];
+  }
 
-  // useEffect(() => {
-  //   let result = data;
+  if (field === "factory_name") {
+    // 🔧 extract factory names from productionRecords array
+    const allFactories = data.flatMap(item =>
+      item.productionRecords?.map(r => r.factory_name) || []
+    );
+    return [...new Set(allFactories)];
+  }
 
-  //   if (search.trim()) {
-  //     result = result.filter((item) =>
-  //       item.style?.toLowerCase().includes(search.toLowerCase())
-  //     );
-  //   }
-
-  //   Object.keys(filters).forEach((key) => {
-  //     if (filters[key]) {
-  //       if (key === "status") {
-  //         result = result.filter(
-  //           (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
-  //         );
-  //       } else if (key === "fabrication") {
-  //         result = result.filter((item) =>
-  //           item.fabric
-  //             ?.replace(/\s+/g, "")  // remove all spaces
-  //             .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
-  //         );
-  //       } else {
-  //         result = result.filter(
-  //           (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
-  //         );
-  //       }
-  //     }
-  //   });
-
-  //   setFilteredData(result);
-  // }, [search, filters, data]);
-
+  return [...new Set(data?.map((item) => item[field]).filter(Boolean))];
+};
 
 
   useEffect(() => {
-  let result = data;
+    let result = data;
 
-  if (search.trim()) {
-    result = result.filter((item) =>
-      item.style?.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  Object.keys(filters).forEach((key) => {
-    if (filters[key]) {
-      if (key === "status") {
-        result = result.filter(
-          (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
-        );
-      } else if (key === "fabrication") {
-        result = result.filter((item) =>
-          item.fabric
-            ?.replace(/\s+/g, "")
-            .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
-        );
-      } else {
-        result = result.filter(
-          (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
-        );
-      }
+    if (search.trim()) {
+      result = result.filter((item) =>
+        item.style?.toLowerCase().includes(search.toLowerCase())
+      );
     }
-  });
 
-  // ✅ Sort after filtering
-  result = sortByStatusAndDate(result);
+Object.keys(filters).forEach((key) => {
+  if (filters[key]) {
+    if (key === "status") {
+      result = result.filter(
+        (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
+      );
+    } else if (key === "fabrication") {
+      result = result.filter((item) =>
+        item.fabric
+          ?.replace(/\s+/g, "")
+          .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
+      );
+    } else if (key === "factory_name") {
+      // ✅ check if any productionRecord matches selected factory
+      result = result.filter(item =>
+        item.productionRecords?.some(r =>
+          r.factory_name?.toLowerCase() === filters.factory_name.toLowerCase()
+        )
+      );
+    } else {
+      result = result.filter(
+        (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
+      );
+    }
+  }
+});
 
-  setFilteredData(result);
-}, [search, filters, data]);
+
+    // ✅ Sort after filtering
+    result = sortByStatusAndDate(result);
+
+    setFilteredData(result);
+  }, [search, filters, data]);
 
 
   const openDeleteModal = (item) => {
@@ -329,22 +314,22 @@ export default function Styles() {
   };
 
   const sortByStatusAndDate = (arr) => {
-  return [...arr].sort((a, b) => {
-    const aStatus = getStyleStatus(a);
-    const bStatus = getStyleStatus(b);
+    return [...arr]?.sort((a, b) => {
+      const aStatus = getStyleStatus(a);
+      const bStatus = getStyleStatus(b);
 
-    const aIndex = SAMPLING_STAGES.indexOf(aStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(aStatus);
-    const bIndex = SAMPLING_STAGES.indexOf(bStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(bStatus);
+      const aIndex = SAMPLING_STAGES.indexOf(aStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(aStatus);
+      const bIndex = SAMPLING_STAGES.indexOf(bStatus) === -1 ? SAMPLING_STAGES.length : SAMPLING_STAGES.indexOf(bStatus);
 
-    if (aIndex !== bIndex) return aIndex - bIndex;
+      if (aIndex !== bIndex) return aIndex - bIndex;
 
-    // Optional: sort by created/updated date (descending)
-    const aDate = new Date(a.added_at || a.created_at || 0).getTime();
-    const bDate = new Date(b.added_at || b.created_at || 0).getTime();
+      // Optional: sort by created/updated date (descending)
+      const aDate = new Date(a.added_at || a.created_at || 0).getTime();
+      const bDate = new Date(b.added_at || b.created_at || 0).getTime();
 
-    return bDate - aDate;
-  });
-};
+      return bDate - aDate;
+    });
+  };
 
 
 
@@ -502,7 +487,7 @@ export default function Styles() {
       </div>
 
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        {filteredData.length === 0 ? (
+        {filteredData?.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <p className="text-lg">No styles found matching your criteria. 😟</p>
             <button onClick={clearFilters} className="mt-4 text-blue-500 hover:underline">
@@ -526,7 +511,7 @@ export default function Styles() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item, idx) => (
+                {filteredData?.map((item, idx) => (
                   <tr key={item._id.$oid || item._id} className="hover:bg-gray-50 transition duration-150 ease-in-out">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{idx + 1}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.buyer}</td>
@@ -540,7 +525,10 @@ export default function Styles() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {getStatusBadge(getStyleStatus(item))}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.factory_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.productionRecords?.map((r, idx) => `${idx + 1}: ${r.factory_name}`).join(", ")}
+                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
@@ -550,13 +538,16 @@ export default function Styles() {
                         >
                           <Eye className="h-5 w-5" />
                         </button>
-                        <button
-                          onClick={() => openDeleteModal(item)}
-                          className="text-red-600 hover:text-red-900 transition duration-150 ease-in-out p-1 rounded-full hover:bg-gray-200"
-                          title="Delete Style"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                        {
+                          userInfo?.role === "admin" &&
+                          <button
+                            onClick={() => openDeleteModal(item)}
+                            className="text-red-600 hover:text-red-900 transition duration-150 ease-in-out p-1 rounded-full hover:bg-gray-200"
+                            title="Delete Style"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        }
                       </div>
                     </td>
                   </tr>

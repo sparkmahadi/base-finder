@@ -10,6 +10,8 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refetchUser, setRefetchUser] = useState(false);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -18,7 +20,7 @@ export function AuthProvider({ children }) {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [refetchUser]);
 
   const login = async () => {
     const token = localStorage.getItem("token");
@@ -65,7 +67,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, userInfo, getUserInfo, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, userInfo, getUserInfo, loading, setRefetchUser }}>
       {children}
     </AuthContext.Provider>
   );

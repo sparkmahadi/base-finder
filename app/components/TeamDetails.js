@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
+import { toast } from "react-toastify";
+import { getAuthHeaders } from "../utils/getAuthHeaders";
+import axios from "axios";
 
 export default function TeamDetails({ team, allBuyers = [], allUsers = [], onUpdate, onCancel }) {
     // Local state for editing the team
@@ -74,7 +77,7 @@ export default function TeamDetails({ team, allBuyers = [], allUsers = [], onUpd
     };
 
     // Form submit handler
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
 
@@ -91,7 +94,6 @@ export default function TeamDetails({ team, allBuyers = [], allUsers = [], onUpd
             return;
         }
 
-        // Validate members have user_id, username and role
         const validMembers = formData.members.every(
             (m) => m.user_id && m.username && m.role
         );
@@ -100,14 +102,64 @@ export default function TeamDetails({ team, allBuyers = [], allUsers = [], onUpd
             return;
         }
 
-        setLoading(true);
-        // Call onUpdate with updated data
-        onUpdate({
-            team_name: formData.team_name,
-            buyers: formData.buyers,
-            members: formData.members,
-        }).finally(() => setLoading(false));
+        try {
+            setLoading(true);
+
+            // ✅ 1) Update team first
+            await onUpdate({
+                team_name: formData.team_name,
+                buyers: formData.buyers,
+                members: formData.members,
+            });
+
+            console.log("after update", formData)
+
+            // ✅ 2) Then update all users (in parallel)
+            await Promise.all(
+                formData.members.map((member) =>
+                    handleUpdateUser(member.user_id, formData.team_name)
+                )
+            );
+
+            toast.success("Team and users updated successfully!");
+        } catch (err) {
+            console.error("Error updating team or users:", err);
+            setError("Failed to update team or users. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
+
+
+    const handleUpdateUser = async (userId, team) => {
+        const toastId = toast.loading(`Updating user ${userId}...`);
+        console.log(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`);
+        
+        try {
+            const updateData = { team };
+            console.log("Frontend: Updating user:", userId, "with data:", updateData);
+            const response = await axios.put(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`,
+                updateData, { headers: getAuthHeaders() }
+            );
+            console.log("response", response);
+
+            toast.update(toastId, {
+                render: response.data.message || `User ${userId} updated successfully!`,
+                type: "success",
+                isLoading: false,
+                autoClose: 3000,
+            });
+        } catch (err) {
+            toast.update(toastId, {
+                render: err.response?.data?.message || `Failed to update user ${userId}`,
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+            });
+        }
+    };
+
 
     if (!team) {
         return (
@@ -116,10 +168,6 @@ export default function TeamDetails({ team, allBuyers = [], allUsers = [], onUpd
             </div>
         );
     }
-
-    // If you want, you can also pass `allBuyers` and `allUsers` as props here
-    // For demo, we'll just display current buyers & members (without editing buyers from a full list)
-    // You can enhance this component later to select buyers and members from full lists.
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow">

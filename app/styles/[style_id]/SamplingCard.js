@@ -15,7 +15,7 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
     const [modalPattern, setModalPattern] = useState(null);
 
 
-    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, productionRecords, sampling_update_at, sampling_updated_by, added_at, added_by, ...relevantFields } = style;
+    const { _id, buyer, season, item, style: styleCode, descr, version, status, fabric, prints, similar, productionRecords, sampling_update_at, sampling_updated_by, added_at, added_by, team, ...relevantFields } = style;
     const [editedStyle, setEditedStyle] = useState({ ...relevantFields });
     const [newActivityKey, setNewActivityKey] = useState("");
     const [newActivityDate, setNewActivityDate] = useState("");
@@ -41,6 +41,10 @@ const SamplingCard = ({ style, setShowAddForm, showAddForm, onUpdateSampling }) 
 
     // --- Delete field directly in the document ---
     const handleDelete = async (key) => {
+        const confirm = window.confirm("Are you sure to delete the activity?")
+        if (!confirm) {
+            return;
+        }
         try {
             const res = await axios.put(`${API_BASE_URL}/styles/update-style-sampling/${style._id}`, {
                 action: "deleteField",

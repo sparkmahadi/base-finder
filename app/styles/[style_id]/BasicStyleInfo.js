@@ -24,6 +24,7 @@ const BasicStyleInfo = ({ style, setStyle, isEditing, setShowAddForm, showAddFor
     "sampling_updated_by",
     "added_at",
     "added_by",
+    "team",
   ];
 
   // Sampling stages for status logic

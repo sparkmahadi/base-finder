@@ -10,6 +10,7 @@ import BasicStyleInfo from "./BasicStyleInfo";
 import SamplingCard from "./SamplingCard";
 import { useSampleData } from "@/app/hooks/useSampleData";
 import SampleListRow from "@/app/samples/components/SampleListRow";
+import CloneStyleForm from "@/app/components/CloneStyleForm";
 
 const StyleDetails = () => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -161,7 +162,7 @@ const StyleDetails = () => {
             updated_by: userInfo?.username,
             updated_at: new Date(),
           },
-          {headers: getAuthHeaders()}
+          { headers: getAuthHeaders() }
         );
 
         const data = res2.data;
@@ -211,6 +212,12 @@ const StyleDetails = () => {
     handleSearchSample(styleCode);
 
   });
+
+  const [showCloneStyleForm, setShowCloneStyleForm] = useState(false);
+
+  const handleCopyStyle = () => {
+    setShowCloneStyleForm(!showCloneStyleForm);
+  }
 
   const tableHeadings = useMemo(() => [ // Memoize this array as well
     { label: "SL" },
@@ -265,11 +272,20 @@ const StyleDetails = () => {
             {isEditing ? <Save className="h-5 w-5 mr-2" /> : <Pencil className="h-5 w-5 mr-2" />}
             {isEditing ? "Save" : "Edit Basic Info"}
           </button>
+          {isEditing || <button className={`px-4 py-2 text-white font-semibold rounded-lg shadow-md transition-all duration-300 flex items-center ${isEditing ? "bg-purple-400 hover:bg-purple-700" : "bg-blue-400 hover:bg-blue-700"
+            }`}
+            onClick={handleCopyStyle}
+          >{showCloneStyleForm ? "Cancel Cloning" : "Clone This Style"}</button>}
 
         </div>
       </div>
 
       <div className="">
+        {showCloneStyleForm &&
+          <CloneStyleForm style={style}/>
+        }
+
+
         <div className="">
           <BasicStyleInfo
             style={style}

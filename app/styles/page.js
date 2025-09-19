@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { Search, Plus, Eye, Trash2, X, Download } from 'lucide-react'; // Import Lucide icons
+import { Search, Plus, Eye, Trash2, X, Download, Check, Clock } from 'lucide-react'; // Import Lucide icons
 import Modal from "./Modal";
 import * as XLSX from "xlsx";
 import { useAuth } from "../context/AuthContext";
@@ -531,6 +531,7 @@ export default function Styles() {
                       {item.productionRecords?.map((r, idx) => `${idx + 1}: ${r.factory_name}`).join(", ")}
                     </td>
 
+
                     {userInfo?.role === "admin" && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {(() => {
@@ -538,49 +539,59 @@ export default function Styles() {
                           const printsValue = isNaN(parseInt(item.prints)) ? 0 : parseInt(item.prints);
 
                           if (printsValue <= 0) {
-                            // 🔴 If no prints, show a single message
-                            return (
-                              <div className="text-gray-500 italic">
-                                No Prints
+                            return <div className="text-gray-500 italic">-n/a</div>;
+                          }
+
+                          // ✅ PRO-SCREEN Logic
+                          let proScreenElement = null;
+                          if (item["PRO-SCREEN"]) {
+                            const hasFactories =
+                              Array.isArray(item?.productionRecords) &&
+                              item?.productionRecords.length > 0 &&
+                              item?.productionRecords.every(record => !!record.factory_name);
+
+                            const hasProScreenDate = !!item["PRO-SCREEN"]?.date;
+                            const proScreenDone =
+                              hasFactories && printsValue > 0 && hasProScreenDate;
+
+                            proScreenElement = (
+                              <div className={`font-medium ${proScreenDone ? "text-green-600" : "text-orange-600"} flex items-center gap-1`}>
+                                {proScreenDone ? <Check size={16} /> : <Clock size={16} />}
+                                PRO-SCREEN
                               </div>
                             );
                           }
 
-                          // ✅ PRO-SCREEN Logic
-                          const hasFactories =
-                            Array.isArray(item.productionRecords) &&
-                            item.productionRecords.length > 0 &&
-                            item.productionRecords.every(record => !!record.factory_name);
-
-                          const hasProScreenDate = !!item["PRO-SCREEN"]?.date;
-                          const proScreenDone =
-                            hasFactories && printsValue > 0 && hasProScreenDate;
-
                           // ✅ PP-SCREEN Logic
-                          const hasPPDate = !!item.PP?.date;
-                          const hasPPScreenDate = !!item["PP-SCREEN"]?.date;
-                          const ppScreenDone = hasPPDate && hasPPScreenDate;
+                          let ppScreenElement = null;
+                          if (item.PP) {
+                            const hasPPDate = !!item?.PP?.date;
+                            const hasPPScreenDate = !!item["PP-SCREEN"]?.date;
+                            const ppScreenDone = hasPPDate && hasPPScreenDate;
 
-                          // ✅ Show both statuses
+                            ppScreenElement = (
+                              <div className={`font-medium ${ppScreenDone ? "text-green-600" : "text-orange-600"} flex items-center gap-1`}>
+                                {ppScreenDone ? <Check size={16} /> : <Clock size={16} />}
+                                PP-SCREEN
+                              </div>
+                            );
+                          }
+
+                          // ✅ Fallback if neither exists
+                          if (!proScreenElement && !ppScreenElement) {
+                            return <div className="text-gray-500 italic">-n/a</div>;
+                          }
+
                           return (
                             <div className="flex flex-col gap-1">
-                              <div
-                                className={`font-medium ${proScreenDone ? "text-green-600" : "text-red-600"
-                                  }`}
-                              >
-                                {proScreenDone ? "PRO-SCREEN: ✅" : "PRO-SCREEN: ❌"}
-                              </div>
-                              <div
-                                className={`font-medium ${ppScreenDone ? "text-green-600" : "text-red-600"
-                                  }`}
-                              >
-                                {ppScreenDone ? "PP-SCREEN: ✅" : "PP-SCREEN: ❌"}
-                              </div>
+                              {proScreenElement}
+                              {ppScreenElement}
                             </div>
                           );
                         })()}
                       </td>
                     )}
+
 
 
 

@@ -130,21 +130,21 @@ export default function Styles() {
     });
   };
 
-const getUniqueValues = (field) => {
-  if (field === "status") {
-    return [...new Set(data?.map((item) => getStyleStatus(item)).filter(Boolean))];
-  }
+  const getUniqueValues = (field) => {
+    if (field === "status") {
+      return [...new Set(data?.map((item) => getStyleStatus(item)).filter(Boolean))];
+    }
 
-  if (field === "factory_name") {
-    // 🔧 extract factory names from productionRecords array
-    const allFactories = data.flatMap(item =>
-      item.productionRecords?.map(r => r.factory_name) || []
-    );
-    return [...new Set(allFactories)];
-  }
+    if (field === "factory_name") {
+      // 🔧 extract factory names from productionRecords array
+      const allFactories = data.flatMap(item =>
+        item.productionRecords?.map(r => r.factory_name) || []
+      );
+      return [...new Set(allFactories)];
+    }
 
-  return [...new Set(data?.map((item) => item[field]).filter(Boolean))];
-};
+    return [...new Set(data?.map((item) => item[field]).filter(Boolean))];
+  };
 
 
   useEffect(() => {
@@ -156,32 +156,32 @@ const getUniqueValues = (field) => {
       );
     }
 
-Object.keys(filters).forEach((key) => {
-  if (filters[key]) {
-    if (key === "status") {
-      result = result.filter(
-        (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
-      );
-    } else if (key === "fabrication") {
-      result = result.filter((item) =>
-        item.fabric
-          ?.replace(/\s+/g, "")
-          .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
-      );
-    } else if (key === "factory_name") {
-      // ✅ check if any productionRecord matches selected factory
-      result = result.filter(item =>
-        item.productionRecords?.some(r =>
-          r.factory_name?.toLowerCase() === filters.factory_name.toLowerCase()
-        )
-      );
-    } else {
-      result = result.filter(
-        (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
-      );
-    }
-  }
-});
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        if (key === "status") {
+          result = result.filter(
+            (item) => getStyleStatus(item).toLowerCase() === filters.status.toLowerCase()
+          );
+        } else if (key === "fabrication") {
+          result = result.filter((item) =>
+            item.fabric
+              ?.replace(/\s+/g, "")
+              .toLowerCase() === filters.fabrication.replace(/\s+/g, "").toLowerCase()
+          );
+        } else if (key === "factory_name") {
+          // ✅ check if any productionRecord matches selected factory
+          result = result.filter(item =>
+            item.productionRecords?.some(r =>
+              r.factory_name?.toLowerCase() === filters.factory_name.toLowerCase()
+            )
+          );
+        } else {
+          result = result.filter(
+            (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
+          );
+        }
+      }
+    });
 
 
     // ✅ Sort after filtering
@@ -507,6 +507,8 @@ Object.keys(filters).forEach((key) => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Versions</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Factory</th>
+                  {userInfo?.role === "admin" &&
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Screen</th>}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -528,6 +530,63 @@ Object.keys(filters).forEach((key) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.productionRecords?.map((r, idx) => `${idx + 1}: ${r.factory_name}`).join(", ")}
                     </td>
+
+                    {userInfo?.role === "admin" && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {(() => {
+                          // ✅ Safely parse prints
+                          const printsValue = isNaN(parseInt(item.prints)) ? 0 : parseInt(item.prints);
+
+                          if (printsValue <= 0) {
+                            // 🔴 If no prints, show a single message
+                            return (
+                              <div className="text-gray-500 italic">
+                                No Prints
+                              </div>
+                            );
+                          }
+
+                          // ✅ PRO-SCREEN Logic
+                          const hasFactories =
+                            Array.isArray(item.productionRecords) &&
+                            item.productionRecords.length > 0 &&
+                            item.productionRecords.every(record => !!record.factory_name);
+
+                          const hasProScreenDate = !!item["PRO-SCREEN"]?.date;
+                          const proScreenDone =
+                            hasFactories && printsValue > 0 && hasProScreenDate;
+
+                          // ✅ PP-SCREEN Logic
+                          const hasPPDate = !!item.PP?.date;
+                          const hasPPScreenDate = !!item["PP-SCREEN"]?.date;
+                          const ppScreenDone = hasPPDate && hasPPScreenDate;
+
+                          // ✅ Show both statuses
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <div
+                                className={`font-medium ${proScreenDone ? "text-green-600" : "text-red-600"
+                                  }`}
+                              >
+                                {proScreenDone ? "PRO-SCREEN: ✅" : "PRO-SCREEN: ❌"}
+                              </div>
+                              <div
+                                className={`font-medium ${ppScreenDone ? "text-green-600" : "text-red-600"
+                                  }`}
+                              >
+                                {ppScreenDone ? "PP-SCREEN: ✅" : "PP-SCREEN: ❌"}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </td>
+                    )}
+
+
+
+
+
+
 
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex space-x-2">

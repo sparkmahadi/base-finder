@@ -537,14 +537,13 @@ export default function Styles() {
                         {(() => {
                           // ✅ Safely parse prints
                           const printsValue = isNaN(parseInt(item.prints)) ? 0 : parseInt(item.prints);
-
                           if (printsValue <= 0) {
                             return <div className="text-gray-500 italic">-n/a</div>;
                           }
 
                           // ✅ PRO-SCREEN Logic
                           let proScreenElement = null;
-                          if (item["PRO-SCREEN"]) {
+                          if (Array.isArray(item?.productionRecords)) {
                             const hasFactories =
                               Array.isArray(item?.productionRecords) &&
                               item?.productionRecords.length > 0 &&

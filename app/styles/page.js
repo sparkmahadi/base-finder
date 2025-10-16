@@ -268,11 +268,11 @@ export default function Styles() {
           break;
 
         case "Fit":
-          if (style.fit?.date) return "Fit";
+          if (style.FIT?.date) return "Fit";
           break;
 
         case "2nd Fit":
-          if (style.second_fit?.date) return "2nd Fit";
+          if (style.SECOND_FIT?.date) return "2nd Fit";
           break;
 
         case "PP":

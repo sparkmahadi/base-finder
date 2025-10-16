@@ -549,7 +549,7 @@ export default function Styles() {
                               item?.productionRecords.length > 0 &&
                               item?.productionRecords.every(record => !!record.factory_name);
 
-                            const hasProScreenDate = !!item["PRO-SCREEN"]?.date;
+                            const hasProScreenDate = !!item["PRO-SCREEN"]?.date || !!item["PRO_SCREEN"]?.date;
                             const proScreenDone =
                               hasFactories && printsValue > 0 && hasProScreenDate;
 
@@ -565,7 +565,7 @@ export default function Styles() {
                           let ppScreenElement = null;
                           if (item.PP) {
                             const hasPPDate = !!item?.PP?.date;
-                            const hasPPScreenDate = !!item["PP-SCREEN"]?.date;
+                            const hasPPScreenDate = !!item["PP-SCREEN"]?.date || !!item["PP_SCREEN"]?.date;
                             const ppScreenDone = hasPPDate && hasPPScreenDate;
 
                             ppScreenElement = (

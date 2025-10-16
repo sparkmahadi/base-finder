@@ -20,6 +20,8 @@ export default function Styles() {
     season: "",
     status: "",
     fabrication: "",
+    factory_name: "",
+    screenStatus: "",
   });
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -175,7 +177,33 @@ export default function Styles() {
               r.factory_name?.toLowerCase() === filters.factory_name.toLowerCase()
             )
           );
-        } else {
+        } else if
+          // ✅ Screen Status filter logic
+          (filters.screenStatus) {
+          result = result.filter((item) => {
+            const printsValue = isNaN(parseInt(item.prints)) ? 0 : parseInt(item.prints);
+
+            const hasFactories =
+              Array.isArray(item?.productionRecords) &&
+              item?.productionRecords.length > 0 &&
+              item?.productionRecords.every(record => !!record.factory_name);
+
+            const hasProScreenDate = !!item["PRO-SCREEN"]?.date || !!item["PRO_SCREEN"]?.date;
+            const hasPPDate = !!item?.PP?.date;
+            const hasPPScreenDate = !!item["PP-SCREEN"]?.date || !!item["PP_SCREEN"]?.date;
+
+            const proScreenDone = hasFactories && printsValue > 0 && hasProScreenDate;
+            const ppScreenDone = hasPPDate && hasPPScreenDate;
+
+            if (filters.screenStatus === "proDone") return proScreenDone;
+            if (filters.screenStatus === "ppDone") return ppScreenDone;
+            if (filters.screenStatus === "pending") return !proScreenDone && !ppScreenDone;
+
+            return true;
+          });
+        }
+
+        else {
           result = result.filter(
             (item) => item[key]?.toLowerCase() === filters[key].toLowerCase()
           );
@@ -472,6 +500,24 @@ export default function Styles() {
               ))}
             </select>
           </div>
+
+          <div className="col-span-1">
+            <label htmlFor="screenStatus" className="block text-sm font-medium text-gray-700 mb-1">Screen Status</label>
+            <select
+              id="screenStatus"
+              value={filters.screenStatus}
+              onChange={(e) => handleFilterChange("screenStatus", e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All</option>
+              <option value="proDone">PRO-SCREEN Done</option>
+              <option value="ppDone">PP-SCREEN Done</option>
+              <option value="pending">Pending Screens</option>
+            </select>
+          </div>
+
+
+
         </div>
         {(search || Object.values(filters).some(f => f)) && (
           <div className="mt-4 text-right">

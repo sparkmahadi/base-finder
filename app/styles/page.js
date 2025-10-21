@@ -198,7 +198,7 @@ export default function Styles() {
 
             if (filters.screenStatus === "proDone") return proScreenDone;
             if (filters.screenStatus === "ppDone") return ppScreenDone;
-            if (filters.screenStatus === "pending") return !proScreenDone && !ppScreenDone;
+            if (filters.screenStatus === "pending") return !proScreenDone && !ppScreenDone &&printsValue > 0 && hasPPDate && hasFactories;
 
             return true;
           });

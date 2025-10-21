@@ -7,6 +7,7 @@ import { Search, Plus, Eye, Trash2, X, Download, Check, Clock } from 'lucide-rea
 import Modal from "./Modal";
 import * as XLSX from "xlsx";
 import { useAuth } from "../context/AuthContext";
+import BulkUpdateModal from "./bulk-update/BulkUpdateModal";
 
 export default function Styles() {
   const { userInfo } = useAuth();
@@ -361,6 +362,23 @@ export default function Styles() {
 
 
 
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [selectedStyles, setSelectedStyles] = useState([]);
+
+ async function bulkUpdateStyles(payload) {
+    try {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/styles/bulk-update`, payload, {
+        headers: getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      throw error.response?.data || { message: "Bulk update failed" };
+    }
+  }
+
+
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -384,13 +402,15 @@ export default function Styles() {
         <h2 className="text-3xl font-extrabold text-gray-900">Styles Overview ✨</h2>
         {
           userInfo?.role === "admin" &&
-          <button
-            onClick={downloadExcel}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
-          >
-            <Download className="mr-2 h-5 w-5" />
-            Download Excel
-          </button>
+          <>
+            <button
+              onClick={downloadExcel}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center shadow-lg transition duration-300 ease-in-out"
+            >
+              <Download className="mr-2 h-5 w-5" />
+              Download Excel
+            </button>
+          </>
         }
         <button
           onClick={() => router.push('/styles/create-style')}
@@ -400,6 +420,21 @@ export default function Styles() {
           Create New Style
         </button>
       </div>
+
+      <BulkUpdateModal
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        selectedStyles={selectedStyles}
+        styles={data}
+        onSubmit={bulkUpdateStyles}
+      />
+
+      <button
+        onClick={() => setBulkModalOpen(true)}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+      >
+        Bulk Update
+      </button>
 
       <div className="bg-white p-6 rounded-xl shadow-md mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">

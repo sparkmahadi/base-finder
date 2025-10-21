@@ -429,12 +429,15 @@ export default function Styles() {
         onSubmit={bulkUpdateStyles}
       />
 
-      <button
+      {
+        userInfo?.role === "admin" &&
+        <button
         onClick={() => setBulkModalOpen(true)}
         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
       >
         Bulk Update
       </button>
+      }
 
       <div className="bg-white p-6 rounded-xl shadow-md mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">

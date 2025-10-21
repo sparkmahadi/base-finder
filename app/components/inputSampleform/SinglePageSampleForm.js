@@ -492,6 +492,25 @@ const SinglePageSampleForm = () => {
     // Show a full-page loader while initial data is being fetched
     if (loading && currentStep === 1) return <Loader />;
 
+
+    
+  if (!userInfo?.approval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not approved yet!!! Contact Admin...</h2>
+      </div>
+    );
+  }
+
+  if (!userInfo?.verification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not verified yet!!! Contact Admin...</h2>
+      </div>
+    )
+  };
+
+  
     return (
         <div className="p-4 bg-white text-black shadow rounded max-w-6xl mx-auto my-8">
             <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">Input Sample Details</h2>

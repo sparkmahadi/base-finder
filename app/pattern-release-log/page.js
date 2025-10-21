@@ -204,7 +204,7 @@ const PatternReleaseLog = () => {
             if (optionType === "category") {
                 try {
                     await axios.post(`${API_BASE_URL}/utilities/${endpoint}`, {
-                        cat_name:value, createdBy: userInfo?.username
+                        cat_name: value, createdBy: userInfo?.username
                     }, {
                         headers: getAuthHeaders(),
                     });
@@ -334,6 +334,21 @@ const PatternReleaseLog = () => {
     });
 
 
+    if (!userInfo?.approval) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+                <h2>System: Your account is not approved yet!!! Contact Admin...</h2>
+            </div>
+        );
+    }
+
+    if (!userInfo?.verification) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+                <h2>System: Your account is not verified yet!!! Contact Admin...</h2>
+            </div>
+        )
+    };
 
 
     console.log(filteredLogs);

@@ -104,6 +104,23 @@ const DashboardClient = ({
 
   // No explicit loader return needed here for initial load as data comes via props.
 
+  
+  if (!userInfo?.approval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not approved yet!!! Contact Admin...</h2>
+      </div>
+    );
+  }
+
+  if (!userInfo?.verification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not verified yet!!! Contact Admin...</h2>
+      </div>
+    )
+  };
+  
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Dashboard Overview</h1>

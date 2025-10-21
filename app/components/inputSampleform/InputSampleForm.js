@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
-import Loader from "../Loader"; 
+import Loader from "../Loader";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css"; // Styles for date picker
 import { getAuthHeaders } from "@/app/utils/getAuthHeaders";
@@ -145,7 +145,7 @@ const InputSampleForm = () => {
 
   // Function to re-fetch all options (used after adding a new utility item)
   const refetchAllOptions = useCallback(async () => {
-    setLoading(true); 
+    setLoading(true);
     const [categoriesRes, buyersRes, statusesRes, shelfsRes, divisionsRes] = await Promise.allSettled([
       apiFetchCategories(),
       apiFetchBuyers(),
@@ -485,6 +485,23 @@ const InputSampleForm = () => {
 
   // Show a full-page loader while initial data is being fetched
   if (loading && currentStep === 1) return <Loader />;
+
+
+  if (!userInfo?.approval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not approved yet!!! Contact Admin...</h2>
+      </div>
+    );
+  }
+
+  if (!userInfo?.verification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not verified yet!!! Contact Admin...</h2>
+      </div>
+    )
+  };
 
   return (
     <div className="p-4 bg-white text-black shadow rounded max-w-2xl mx-auto my-8">

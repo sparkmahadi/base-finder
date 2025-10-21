@@ -22,7 +22,7 @@ const TakenSamplesList = () => {
   const fetchSamples = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`, {headers: getAuthHeaders()});
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/samples/taken-samples`, { headers: getAuthHeaders() });
       if (res.data.success) {
         setSamples(res.data.samples);
         toast.success(res.data.message);
@@ -73,6 +73,22 @@ const TakenSamplesList = () => {
     "Last Taken By",
     "Actions",
   ];
+
+  if (!userInfo?.approval) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not approved yet!!! Contact Admin...</h2>
+      </div>
+    );
+  }
+
+  if (!userInfo?.verification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold text-red-600">
+        <h2>System: Your account is not verified yet!!! Contact Admin...</h2>
+      </div>
+    )
+  };
 
   if (!userInfo || !isAuthenticated) {
     return <Loader />;

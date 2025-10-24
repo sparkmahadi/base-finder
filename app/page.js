@@ -434,7 +434,7 @@ const AppContent = () => {
       <footer id="contact" className="mt-8 pt-8 pb-4 border-t border-gray-200 text-center text-sm text-gray-500 px-4 sm:px-6 lg:px-8 bg-white" data-aos="fade-in">
         <div className='max-w-7xl mx-auto'>
           <p className='mb-2 text-gray-700 font-semibold'>
-            Contact us at <a href="mailto:info@basefinder.com" className='text-indigo-600 hover:text-indigo-800'>info@basefinder.com</a> or call <span className='text-gray-900 font-bold'>+1 (555) 123-4567</span>.
+            Made with dedication by <a href="mailto:info@basefinder.com" className='text-indigo-600 hover:text-indigo-800'>Md. Mahadi Hasan</a> | Textile Engineer
           </p>
           <p>© 2025 Base Finder. All rights reserved. | <a href="#" className='hover:underline'>Privacy Policy</a> | <a href="#" className='hover:underline'>Terms of Service</a></p>
         </div>

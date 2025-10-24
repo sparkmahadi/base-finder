@@ -56,7 +56,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-gray-700 shadow-md px-6 py-4">
-      <div className="mx-5 flex justify-between items-center">
+      <div className="flex justify-between items-center max-w-screen-2xl mx-auto">
         {/* Logo */}
         <div
           className="text-white font-extrabold text-2xl cursor-pointer tracking-wide"

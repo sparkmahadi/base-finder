@@ -59,10 +59,11 @@ export default function Navbar() {
       <div className="flex justify-between items-center max-w-screen-2xl mx-auto">
         {/* Logo */}
         <div
-          className="text-white font-extrabold text-2xl cursor-pointer tracking-wide"
+          className="text-white font-extrabold text-2xl cursor-pointer tracking-wide flex flex-col"
           onClick={() => router.push("/")}
         >
-          BaseFinder V2
+          BaseFinderV2
+          <span className="text-base">By Mahadi</span>
         </div>
 
         {/* Desktop Navigation */}

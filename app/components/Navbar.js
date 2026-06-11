@@ -62,7 +62,7 @@ export default function Navbar() {
           className="text-white font-extrabold text-2xl cursor-pointer tracking-wide flex flex-col"
           onClick={() => router.push("/")}
         >
-          BaseFinderV2
+          ApparelSailor
           <span className="text-base">By Mahadi</span>
         </div>
 
